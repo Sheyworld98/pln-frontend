@@ -1,58 +1,73 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 
-const API_BASE = "https://pln-backend1-1.onrender.com"; // Update to your deployed backend URL
+const BACKEND_URL = "https://pln-backend1-1.onrender.com"; // Your deployed backend
 
 function App() {
   const [users, setUsers] = useState([]);
-  const [selectedUser, setSelectedUser] = useState("");
+  const [userId, setUserId] = useState("");
   const [newUser, setNewUser] = useState("");
   const [profile, setProfile] = useState(null);
   const [score, setScore] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
   const [history, setHistory] = useState([]);
+  const [task, setTask] = useState(null);
+  const [selectedOption, setSelectedOption] = useState("");
 
-  const fetchAll = async (userId) => {
-    if (!userId) return;
+  const fetchAll = async (uid = userId) => {
+    if (!uid) return;
+
     try {
-      const profileRes = await fetch(`${API_BASE}/profile/${userId}`);
-      const profileData = await profileRes.json();
-      setProfile(profileData);
-
-      const scoreRes = await fetch(`${API_BASE}/score/${userId}`);
-      const scoreData = await scoreRes.json();
-      setScore(scoreData);
-
-      const leaderboardRes = await fetch(`${API_BASE}/leaderboard`);
-      const leaderboardData = await leaderboardRes.json();
-      setLeaderboard(leaderboardData);
-
-      const historyRes = await fetch(`${API_BASE}/history/${userId}`);
-      const historyData = await historyRes.json();
-      setHistory(historyData);
+      const [profileRes, scoreRes, leaderboardRes, historyRes] = await Promise.all([
+        fetch(`${BACKEND_URL}/profile/${uid}`),
+        fetch(`${BACKEND_URL}/score/${uid}`),
+        fetch(`${BACKEND_URL}/leaderboard`),
+        fetch(`${BACKEND_URL}/history/${uid}`)
+      ]);
+      setProfile(await profileRes.json());
+      setScore(await scoreRes.json());
+      setLeaderboard(await leaderboardRes.json());
+      setHistory(await historyRes.json());
     } catch (err) {
-      console.error("Fetch error:", err);
+      console.error("Data fetch failed", err);
     }
+  };
+
+  const fetchUsers = async () => {
+    const res = await fetch(`${BACKEND_URL}/users`);
+    setUsers(await res.json());
+  };
+
+  const fetchTask = async () => {
+    if (!userId) return;
+    const res = await fetch(`${BACKEND_URL}/task/fetch/${userId}`);
+    const taskData = await res.json();
+    setTask(taskData);
+    setSelectedOption("");
+  };
+
+  const submitTask = async () => {
+    if (!task || !selectedOption) return;
+    const res = await fetch(`${BACKEND_URL}/task/submit/${task.id}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Timestamp": new Date().toISOString()
+      },
+      body: JSON.stringify({ user_id: userId, solution: selectedOption })
+    });
+    const result = await res.json();
+    alert(`✅ Submitted with confidence: ${result.confidence}`);
+    fetchAll();
+    setTask(null);
   };
 
   useEffect(() => {
-    fetch(`${API_BASE}/users`)
-      .then(res => res.json())
-      .then(data => setUsers(data));
+    fetchUsers();
   }, []);
 
-  const handleUserSelect = (e) => {
-    const userId = e.target.value;
-    setSelectedUser(userId);
-    setNewUser("");
-    fetchAll(userId);
-  };
-
-  const handleNewUserSubmit = () => {
-    if (newUser.trim()) {
-      setSelectedUser(newUser.trim());
-      fetchAll(newUser.trim());
-    }
-  };
+  useEffect(() => {
+    if (userId) fetchAll();
+  }, [userId]);
 
   const getBadge = (points) => {
     if (points >= 100) return "🥇 Gold";
@@ -62,26 +77,28 @@ function App() {
   };
 
   return (
-    <div style={{ fontFamily: "Arial", padding: "20px" }}>
+    <div style={{ fontFamily: "Arial", padding: 20 }}>
       <h1>🔠 PLN Contributor Dashboard</h1>
 
+      <label>👥 Select User: </label>
+      <select value={userId} onChange={(e) => setUserId(e.target.value)}>
+        <option value="">-- Select --</option>
+        {users.map((id) => (
+          <option key={id} value={id}>{id}</option>
+        ))}
+      </select>
+
       <div>
-        <label>👥 Select User: </label>
-        <select value={selectedUser} onChange={handleUserSelect}>
-          <option value="">-- Select --</option>
-          {users.map((u, idx) => (
-            <option key={idx} value={u}>{u}</option>
-          ))}
-        </select>
-        <br /><br />
         <input
           type="text"
           placeholder="or enter new user..."
           value={newUser}
           onChange={(e) => setNewUser(e.target.value)}
         />
-        <button onClick={handleNewUserSubmit}>🔄 Refresh</button>
+        <button onClick={() => { setUserId(newUser); setNewUser(""); }}>Set User</button>
       </div>
+
+      <button onClick={fetchAll}>🔄 Refresh</button>
 
       <section>
         <h2>👤 Profile</h2>
@@ -98,47 +115,63 @@ function App() {
         <h2>📊 Score</h2>
         {score ? (
           <div>
-            <p><strong>{score[selectedUser] || 0}</strong> points</p>
-            <p><strong>Badge:</strong> {getBadge(score[selectedUser] || 0)}</p>
+            <p><strong>{score[userId] || 0}</strong> points</p>
+            <p><strong>Badge:</strong> {getBadge(score[userId] || 0)}</p>
           </div>
         ) : <p>Loading score...</p>}
       </section>
 
       <section>
         <h2>🏆 Leaderboard</h2>
-        {leaderboard.length > 0 ? (
-          <ul>
-            {leaderboard.map((entry, index) => (
-              <li key={index}>{entry.user_id} — {entry.score} pts</li>
-            ))}
-          </ul>
+        {leaderboard.length ? (
+          <ul>{leaderboard.map((u, i) => <li key={i}>{u.user_id} — {u.score} pts</li>)}</ul>
         ) : <p>Loading leaderboard...</p>}
       </section>
 
       <section>
         <h2>📅 Labeling History</h2>
-        {history.length > 0 ? (
-          <table border="1" cellPadding="8" style={{ borderCollapse: "collapse" }}>
+        {history.length ? (
+          <table border="1" cellPadding="8">
             <thead>
-              <tr>
-                <th>Time</th>
-                <th>Question</th>
-                <th>Label</th>
-                <th>Confidence</th>
-              </tr>
+              <tr><th>Time</th><th>Question</th><th>Label</th><th>Confidence</th></tr>
             </thead>
             <tbody>
-              {history.map((item, index) => (
-                <tr key={index}>
-                  <td>{item.timestamp?.slice(0, 19) || "N/A"}</td>
-                  <td>{item.question || "N/A"}</td>
-                  <td>{item.label}</td>
-                  <td>{item.confidence?.toFixed(2)}</td>
+              {history.map((h, i) => (
+                <tr key={i}>
+                  <td>{h.timestamp?.slice(0, 19) || "N/A"}</td>
+                  <td>{h.question || "N/A"}</td>
+                  <td>{h.label}</td>
+                  <td>{h.confidence?.toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         ) : <p>No labeling history yet.</p>}
+      </section>
+
+      <section>
+        <h2>🧩 New Task</h2>
+        {task ? (
+          <div>
+            <p><strong>Q:</strong> {task.task?.text}</p>
+            {task.task?.choices?.map((c) => (
+              <label key={c.key} style={{ marginRight: 10 }}>
+                <input
+                  type="radio"
+                  name="choice"
+                  value={c.key}
+                  checked={selectedOption === c.key}
+                  onChange={(e) => setSelectedOption(e.target.value)}
+                />
+                {c.value}
+              </label>
+            ))}
+            <br />
+            <button onClick={submitTask}>✅ Submit</button>
+          </div>
+        ) : (
+          <button onClick={fetchTask}>📥 Fetch Task</button>
+        )}
       </section>
     </div>
   );
