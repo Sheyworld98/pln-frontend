@@ -12,6 +12,8 @@ function App() {
   const [task, setTask] = useState(null);
   const [selectedAnswer, setSelectedAnswer] = useState("");
   const [feedback, setFeedback] = useState("");
+  const [darkMode, setDarkMode] = useState(false);
+  const [consent, setConsent] = useState(false);
 
   useEffect(() => {
     fetch(`${API_BASE}/users`).then(res => res.json()).then(setUsers);
@@ -57,6 +59,21 @@ function App() {
       .catch(() => setFeedback("❌ Submission failed"));
   };
 
+  const downloadCSV = () => {
+    const csvContent = [
+      ["Time", "Question", "Label", "Confidence"],
+      ...history.map(h => [h.timestamp, h.question, h.label, h.confidence])
+    ].map(e => e.join(",")).join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute("download", `${userId}_labeling_history.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const getBadge = (points) => {
     if (points >= 100) return "🥇 Gold";
     if (points >= 60) return "🥈 Silver";
@@ -65,8 +82,10 @@ function App() {
   };
 
   return (
-    <div style={{ fontFamily: "Arial", padding: "20px" }}>
+    <div style={{ fontFamily: "Arial", padding: "20px", background: darkMode ? "#121212" : "#fff", color: darkMode ? "#eee" : "#000" }}>
       <h1>🔠 PLN Contributor Dashboard</h1>
+
+      <button onClick={() => setDarkMode(!darkMode)}>🌓 Toggle {darkMode ? "Light" : "Dark"} Mode</button>
 
       <div>
         <label>👥 Select User: </label>
@@ -119,6 +138,7 @@ function App() {
 
       <section>
         <h2>📅 Labeling History</h2>
+        <button onClick={downloadCSV}>📥 Download CSV</button>
         {history.length > 0 ? (
           <table border="1" cellPadding="8">
             <thead>
@@ -144,6 +164,7 @@ function App() {
         {task && (
           <div>
             <p><strong>{task.task?.text}</strong></p>
+            {task.content?.image?.url && <img src={task.content.image.url} alt="task visual" style={{ maxWidth: "300px" }} />}
             <ul>
               {task.task?.choices.map((choice, i) => (
                 <li key={i}>
@@ -164,6 +185,17 @@ function App() {
           </div>
         )}
       </section>
+
+      <footer style={{ marginTop: 40, fontStyle: "italic" }}>
+        <p>🔒 Would you like to help us improve this app for better service? Your participation is anonymous and your data is protected.</p>
+        <label>
+          <input
+            type="checkbox"
+            checked={consent}
+            onChange={() => setConsent(!consent)}
+          /> I agree to help improve the service anonymously
+        </label>
+      </footer>
     </div>
   );
 }
