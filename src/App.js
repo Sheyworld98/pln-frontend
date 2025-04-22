@@ -14,9 +14,7 @@ function App() {
   const [feedback, setFeedback] = useState("");
 
   useEffect(() => {
-    fetch(`${API_BASE}/users`)
-      .then(res => res.json())
-      .then(setUsers);
+    fetch(`${API_BASE}/users`).then(res => res.json()).then(setUsers);
   }, []);
 
   const fetchAll = () => {
@@ -33,7 +31,8 @@ function App() {
     setFeedback("");
     fetch(`${API_BASE}/task/fetch/${userId}`)
       .then(res => res.json())
-      .then(setTask);
+      .then(setTask)
+      .catch(() => setFeedback("❌ Failed to fetch task"));
   };
 
   const submitTask = () => {
@@ -44,14 +43,18 @@ function App() {
         "Content-Type": "application/json",
         "X-Timestamp": new Date().toISOString()
       },
-      body: JSON.stringify({ user_id: userId, solution: selectedAnswer })
+      body: JSON.stringify({
+        user_id: userId,
+        solution: selectedAnswer,
+        track_id: task.track_id
+      })
     })
       .then(res => res.json())
       .then(data => {
         setFeedback(`✅ Submitted with confidence: ${data.confidence}`);
         fetchAll();
       })
-      .catch(err => setFeedback("❌ Submission failed"));
+      .catch(() => setFeedback("❌ Submission failed"));
   };
 
   const getBadge = (points) => {
