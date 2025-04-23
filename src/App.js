@@ -108,9 +108,9 @@ function App() {
         <h2>👤 Profile</h2>
         {profile ? (
           <div>
-            <p><strong>Languages:</strong> {profile.languages?.join(", ") || "N/A"}</p>
-            <p><strong>Expertise:</strong> {profile.expertise_domains?.join(", ") || "N/A"}</p>
-            <p><strong>Preferred Complexity:</strong> {profile.complexity_level ?? "N/A"}</p>
+            <p><strong>Languages:</strong> {profile.languages && profile.languages.length > 0 ? profile.languages.join(", ") : "N/A"}</p>
+            <p><strong>Expertise:</strong> {profile.expertise_domains && profile.expertise_domains.length > 0 ? profile.expertise_domains.join(", ") : "N/A"}</p>
+            <p><strong>Preferred Complexity:</strong> {profile.complexity_level !== undefined && profile.complexity_level !== null ? profile.complexity_level : "N/A"}</p>
           </div>
         ) : <p>Loading profile...</p>}
       </section>
