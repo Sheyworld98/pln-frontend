@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-
 const API_BASE = "https://pln-backend1-1.onrender.com";
 
 function App() {
@@ -48,7 +47,8 @@ function App() {
       body: JSON.stringify({
         user_id: userId,
         solution: selectedAnswer,
-        track_id: task.track_id
+        track_id: task.track_id,
+        question: task.task?.text || ""
       })
     })
       .then(res => res.json())
@@ -93,12 +93,7 @@ function App() {
           <option value="">-- Select --</option>
           {users.map(id => <option key={id} value={id}>{id}</option>)}
         </select>
-        <input
-          type="text"
-          placeholder="or enter new user..."
-          value={userId}
-          onChange={(e) => setUserId(e.target.value)}
-        />
+        <input type="text" placeholder="or enter new user..." value={userId} onChange={(e) => setUserId(e.target.value)} />
         <button onClick={fetchAll}>Set User</button>
       </div>
 
@@ -108,9 +103,9 @@ function App() {
         <h2>👤 Profile</h2>
         {profile ? (
           <div>
-            <p><strong>Languages:</strong> {profile.languages && profile.languages.length > 0 ? profile.languages.join(", ") : "N/A"}</p>
-            <p><strong>Expertise:</strong> {profile.expertise_domains && profile.expertise_domains.length > 0 ? profile.expertise_domains.join(", ") : "N/A"}</p>
-            <p><strong>Preferred Complexity:</strong> {profile.complexity_level !== undefined && profile.complexity_level !== null ? profile.complexity_level : "N/A"}</p>
+            <p><strong>Languages:</strong> {profile.languages?.join(", ") || "N/A"}</p>
+            <p><strong>Expertise:</strong> {profile.expertise_domains?.join(", ") || "N/A"}</p>
+            <p><strong>Preferred Complexity:</strong> {profile.complexity_level ?? "N/A"}</p>
           </div>
         ) : <p>Loading profile...</p>}
       </section>
@@ -128,11 +123,7 @@ function App() {
       <section>
         <h2>🏆 Leaderboard</h2>
         {leaderboard.length > 0 ? (
-          <ul>
-            {leaderboard.map((entry, i) => (
-              <li key={i}>{entry.user_id} — {entry.score} pts</li>
-            ))}
-          </ul>
+          <ul>{leaderboard.map((entry, i) => <li key={i}>{entry.user_id} — {entry.score} pts</li>)}</ul>
         ) : <p>Loading leaderboard...</p>}
       </section>
 
@@ -141,9 +132,7 @@ function App() {
         <button onClick={downloadCSV}>📥 Download CSV</button>
         {history.length > 0 ? (
           <table border="1" cellPadding="8">
-            <thead>
-              <tr><th>Time</th><th>Question</th><th>Label</th><th>Confidence</th></tr>
-            </thead>
+            <thead><tr><th>Time</th><th>Question</th><th>Label</th><th>Confidence</th></tr></thead>
             <tbody>
               {history.map((h, i) => (
                 <tr key={i}>
@@ -169,13 +158,7 @@ function App() {
               {task.task?.choices.map((choice, i) => (
                 <li key={i}>
                   <label>
-                    <input
-                      type="radio"
-                      name="choice"
-                      value={choice.key}
-                      checked={selectedAnswer === choice.key}
-                      onChange={() => setSelectedAnswer(choice.key)}
-                    /> {choice.value}
+                    <input type="radio" name="choice" value={choice.key} checked={selectedAnswer === choice.key} onChange={() => setSelectedAnswer(choice.key)} /> {choice.value}
                   </label>
                 </li>
               ))}
@@ -188,13 +171,7 @@ function App() {
 
       <footer style={{ marginTop: 40, fontStyle: "italic" }}>
         <p>🔒 Would you like to help us improve this app for better service? Your participation is anonymous and your data is protected.</p>
-        <label>
-          <input
-            type="checkbox"
-            checked={consent}
-            onChange={() => setConsent(!consent)}
-          /> I agree to help improve the service anonymously
-        </label>
+        <label><input type="checkbox" checked={consent} onChange={() => setConsent(!consent)} /> I agree to help improve the service anonymously</label>
       </footer>
     </div>
   );
