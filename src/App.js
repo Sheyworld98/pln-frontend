@@ -46,7 +46,9 @@ function App() {
   const fetchTask = async () => {
     if (!selectedUser) return;
     try {
-      const res = await axios.get(`${API_BASE}/task/fetch/${selectedUser}`, { params: { lang, topic: expertise } });
+      const res = await axios.get(`${API_BASE}/task/fetch/${selectedUser}`, {
+        params: { lang, topic: expertise }  // still sent as topic (API expects 'topic')
+      });
       setTask(res.data);
       setAnswer("");
     } catch (err) {
