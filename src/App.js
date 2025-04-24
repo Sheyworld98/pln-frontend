@@ -1,114 +1,90 @@
-// ==== Frontend: App.js ====
-
 import React, { useEffect, useState } from "react";
+import axios from "axios";
+import "./App.css";
+
+const API_BASE = "https://pln-backend1-1.onrender.com";
 
 function App() {
   const [users, setUsers] = useState([]);
-  const [userId, setUserId] = useState("");
-  const [newUserId, setNewUserId] = useState("");
+  const [selectedUser, setSelectedUser] = useState("");
+  const [newUser, setNewUser] = useState("");
   const [profile, setProfile] = useState(null);
   const [score, setScore] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
   const [history, setHistory] = useState([]);
   const [task, setTask] = useState(null);
   const [answer, setAnswer] = useState("");
-  const [submitted, setSubmitted] = useState(null);
+  const [showDarkMode, setShowDarkMode] = useState(false);
   const [lang, setLang] = useState("en");
   const [topic, setTopic] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
-  const [consent, setConsent] = useState(false);
+  const [feedbackConsent, setFeedbackConsent] = useState(false);
+  const [submission, setSubmission] = useState(null);
 
-  const BACKEND = "https://pln-backend1-1.onrender.com";
+  useEffect(() => {
+    fetch(`${API_BASE}/users`).then(res => res.json()).then(setUsers);
+  }, []);
 
-  const fetchAll = async () => {
-    if (!userId) return;
-    setLoading(true);
-    try {
-      const [profileRes, scoreRes, leaderboardRes, historyRes] = await Promise.all([
-        fetch(`${BACKEND}/profile/${userId}`),
-        fetch(`${BACKEND}/score/${userId}`),
-        fetch(`${BACKEND}/leaderboard`),
-        fetch(`${BACKEND}/history/${userId}`),
-      ]);
-      const profileData = await profileRes.json();
-      const scoreData = await scoreRes.json();
-      const leaderboardData = await leaderboardRes.json();
-      const historyData = await historyRes.json();
-      setProfile(profileData);
-      setScore(scoreData);
-      setLeaderboard(leaderboardData);
-      setHistory(historyData);
-    } catch (err) {
-      console.error("Fetch error:", err);
-    }
-    setLoading(false);
+  const fetchAll = async (user) => {
+    const profileRes = await axios.get(`${API_BASE}/profile/${user}`);
+    const scoreRes = await axios.get(`${API_BASE}/score/${user}`);
+    const lbRes = await axios.get(`${API_BASE}/leaderboard`);
+    const histRes = await axios.get(`${API_BASE}/history/${user}`);
+    setProfile(profileRes.data);
+    setScore(scoreRes.data[user] || 0);
+    setLeaderboard(lbRes.data);
+    setHistory(histRes.data);
+    setSubmission(null);
+  };
+
+  const setUser = () => {
+    const user = newUser || selectedUser;
+    if (!user) return;
+    setSelectedUser(user);
+    fetchAll(user);
   };
 
   const fetchTask = async () => {
-    if (!userId) return;
-    const query = new URLSearchParams({ lang, topic }).toString();
-    const res = await fetch(`${BACKEND}/task/fetch/${userId}?${query}`);
-    const data = await res.json();
-    setTask(data);
-    setAnswer("");
-    setSubmitted(null);
+    if (!selectedUser) return;
+    try {
+      const res = await axios.get(`${API_BASE}/task/fetch/${selectedUser}`, { params: { lang, topic } });
+      setTask(res.data);
+      setAnswer("");
+    } catch (err) {
+      setTask(null);
+    }
   };
 
   const submitAnswer = async () => {
-    const payload = {
-      user_id: userId,
-      track_id: task.track_id,
-      solution: answer,
-      question: task.task?.text || ""
-    };
-    const timestamp = new Date().toISOString();
-    const res = await fetch(`${BACKEND}/task/submit/${task.id}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Timestamp": timestamp,
-      },
-      body: JSON.stringify(payload)
-    });
-    const result = await res.json();
-    setSubmitted(result);
-    fetchAll();
+    if (!task || !answer) return;
+    try {
+      const res = await axios.post(`${API_BASE}/task/submit/${task.id}`, {
+        user_id: selectedUser,
+        solution: answer,
+        question: task.task.text,
+        track_id: task.track_id
+      });
+      setSubmission(res.data);
+      fetchAll(selectedUser);
+    } catch (err) {
+      console.error(err);
+    }
   };
-
-  useEffect(() => {
-    fetch(`${BACKEND}/users`).then(res => res.json()).then(setUsers);
-  }, []);
-
-  useEffect(() => {
-    if (userId) fetchAll();
-  }, [userId]);
-
-  const getBadge = (points) => {
-    if (points >= 100) return "🥇 Gold";
-    if (points >= 60) return "🥈 Silver";
-    if (points >= 30) return "🥉 Bronze";
-    return "🔰 Newbie";
-  };
-
-  const themeStyles = darkMode ? { backgroundColor: "#121212", color: "#f0f0f0" } : { backgroundColor: "#fff", color: "#000" };
 
   return (
-    <div style={{ fontFamily: "Arial", padding: 20, minHeight: "100vh", ...themeStyles }}>
+    <div className={showDarkMode ? "App dark" : "App"}>
       <h1>🔠 PLN Contributor Dashboard</h1>
-      <button onClick={() => setDarkMode(!darkMode)}>🌓 Toggle {darkMode ? "Light" : "Dark"} Mode</button>
+      <button onClick={() => setShowDarkMode(!showDarkMode)}>🌓 Toggle {showDarkMode ? "Light" : "Dark"} Mode</button>
 
       <section>
-        <h2>👥 Select User: </h2>
-        <select value={userId} onChange={e => setUserId(e.target.value)}>
+        <h2>👥 Select User:</h2>
+        <select onChange={(e) => setSelectedUser(e.target.value)} value={selectedUser}>
           <option>-- Select --</option>
           {users.map(u => <option key={u}>{u}</option>)}
         </select>
-        <input placeholder="or enter new user..." value={newUserId} onChange={e => setNewUserId(e.target.value)} />
-        <button onClick={() => setUserId(newUserId)}>Set User</button>
+        <input placeholder="or enter new user..." value={newUser} onChange={(e) => setNewUser(e.target.value)} />
+        <button onClick={setUser}>Set User</button>
+        <button onClick={() => fetchAll(selectedUser)}>🔄 Refresh</button>
       </section>
-
-      <button onClick={fetchAll} disabled={loading}>🔄 Refresh</button>
 
       <section>
         <h2>👤 Profile</h2>
@@ -123,75 +99,67 @@ function App() {
 
       <section>
         <h2>📊 Score</h2>
-        {score ? (
-          <div>
-            <p><strong>{score[userId] || 0}</strong> points</p>
-            <p><strong>Badge:</strong> {getBadge(score[userId] || 0)}</p>
-          </div>
-        ) : <p>Loading score...</p>}
+        <p>{score} points</p>
+        <p>Badge: {score >= 60 ? "🥈 Silver" : "🔰 Newbie"}</p>
       </section>
 
       <section>
         <h2>🏆 Leaderboard</h2>
-        <ul>
-          {leaderboard.map((entry, index) => (
-            <li key={index}>{entry.user_id} — {entry.score} pts</li>
-          ))}
-        </ul>
+        {leaderboard.map(entry => (
+          <div key={entry.user_id}>{entry.user_id} — {entry.score} pts</div>
+        ))}
       </section>
 
       <section>
         <h2>📅 Labeling History</h2>
         <button onClick={() => {
-          const csv = ["Time,Question,Label,Confidence"].concat(history.map(h =>
-            `${h.timestamp},"${h.question}",${h.label},${h.confidence.toFixed(2)}`
-          ));
+          const csv = ["Time,Question,Label,Confidence"];
+          history.forEach(h => {
+            csv.push(`${h.timestamp},${h.question},${h.label},${h.confidence}`);
+          });
           const blob = new Blob([csv.join("\n")], { type: "text/csv" });
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
           a.href = url;
-          a.download = `history_${userId}.csv`;
+          a.download = `${selectedUser}_history.csv`;
           a.click();
         }}>📥 Download CSV</button>
-
-        <table border="1" cellPadding="6" style={{ marginTop: 10 }}>
-          <thead>
-            <tr><th>Time</th><th>Question</th><th>Label</th><th>Confidence</th></tr>
-          </thead>
-          <tbody>
-            {history.map((h, i) => (
-              <tr key={i}>
-                <td>{h.timestamp?.slice(0, 19) || "N/A"}</td>
-                <td>{h.question || "N/A"}</td>
-                <td>{h.label}</td>
-                <td>{h.confidence?.toFixed(2)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {history.map((h, i) => (
+          <div key={i}>
+            {h.timestamp} — {h.question} — {h.label} — {h.confidence.toFixed(2)}
+          </div>
+        ))}
       </section>
 
       <section>
         <h2>🧩 New Task</h2>
-        <label>🌐 Language: <input value={lang} onChange={e => setLang(e.target.value)} /></label>
-        <label>📚 Topic: <input value={topic} onChange={e => setTopic(e.target.value)} /></label>
+        <label>🌐 Language: <input value={lang} onChange={(e) => setLang(e.target.value)} /></label>
+        <label>📚 Topic: <input value={topic} onChange={(e) => setTopic(e.target.value)} /></label>
         <button onClick={fetchTask}>📥 Fetch Task</button>
-
-        {task?.task && (
+        {task && (
           <div>
-            <p><strong>{task.task.text}</strong></p>
-            {task.task.choices?.map(c => (
-              <label key={c.key}><input type="radio" name="ans" value={c.key} onChange={e => setAnswer(e.target.value)} /> {c.value}</label>
-            ))}
-            <button disabled={!answer} onClick={submitAnswer}>✅ Submit Answer</button>
-            {submitted && <p>✅ Submitted with confidence: {submitted.confidence?.toFixed(2)}</p>}
+            <p>{task.task.text}</p>
+            {task.content?.image?.url && <img src={task.content.image.url} alt="task visual" width="200" />}
+            <div>
+              {task.task.choices.map(choice => (
+                <label key={choice.key}>
+                  <input type="radio" name="answer" value={choice.key} onChange={(e) => setAnswer(e.target.value)} /> {choice.value}
+                </label>
+              ))}
+            </div>
+            <button onClick={submitAnswer}>✅ Submit Answer</button>
+            {submission && <p>✅ Submitted with confidence: {submission.confidence}</p>}
           </div>
         )}
       </section>
 
       <section>
-        <h4>🔒 Would you like to help us improve this app for better service? Your participation is anonymous and your data is protected.</h4>
-        <label><input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} /> I agree to help improve the service anonymously</label>
+        <h4>🔒 Will you take a minute to help us improve our services to you?</h4>
+        <label>
+          <input type="checkbox" checked={feedbackConsent} onChange={() => setFeedbackConsent(!feedbackConsent)} />
+          I agree to help improve the service anonymously.
+        </label>
+        <p>Your participation is anonymous, as well as any data you provide.</p>
       </section>
     </div>
   );
