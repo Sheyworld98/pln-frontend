@@ -154,12 +154,12 @@ function App() {
       </section>
 
       <section>
-        <h4>🔒 Will you take a minute to help us improve our services to you?</h4>
-        <label>
-          <input type="checkbox" checked={feedbackConsent} onChange={() => setFeedbackConsent(!feedbackConsent)} />
-          I agree to help improve the service anonymously.
-        </label>
-        <p>Your participation is anonymous, as well as any data you provide.</p>
+      <h4>🔒 Will you take a minute to help us improve our services to you?</h4>
+<label>
+  <input type="checkbox" checked={feedbackConsent} onChange={() => setFeedbackConsent(!feedbackConsent)} />
+  I agree to help improve the service anonymously.
+</label>
+<p>🛡️ Your participation is anonymous, as well as any data you provide.</p>
       </section>
     </div>
   );
