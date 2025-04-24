@@ -16,7 +16,7 @@ function App() {
   const [answer, setAnswer] = useState("");
   const [showDarkMode, setShowDarkMode] = useState(false);
   const [lang, setLang] = useState("en");
-  const [topic, setTopic] = useState("");
+  const [expertise, setExpertise] = useState("");
   const [feedbackConsent, setFeedbackConsent] = useState(false);
   const [submission, setSubmission] = useState(null);
 
@@ -46,7 +46,7 @@ function App() {
   const fetchTask = async () => {
     if (!selectedUser) return;
     try {
-      const res = await axios.get(`${API_BASE}/task/fetch/${selectedUser}`, { params: { lang, topic } });
+      const res = await axios.get(`${API_BASE}/task/fetch/${selectedUser}`, { params: { lang, topic: expertise } });
       setTask(res.data);
       setAnswer("");
     } catch (err) {
@@ -134,7 +134,7 @@ function App() {
       <section>
         <h2>🧩 New Task</h2>
         <label>🌐 Language: <input value={lang} onChange={(e) => setLang(e.target.value)} /></label>
-        <label>📚 Topic: <input value={topic} onChange={(e) => setTopic(e.target.value)} /></label>
+        <label>🎓 Expertise: <input value={expertise} onChange={(e) => setExpertise(e.target.value)} /></label>
         <button onClick={fetchTask}>📥 Fetch Task</button>
         {task && (
           <div>
