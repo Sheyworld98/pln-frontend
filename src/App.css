@@ -36,3 +36,22 @@
     transform: rotate(360deg);
   }
 }
+
+/* Dark mode support */
+.App.dark {
+  background-color: #1a1a1a;
+  color: #f0f0f0;
+}
+
+.App.dark button,
+.App.dark input,
+.App.dark select {
+  background-color: #333;
+  color: #f0f0f0;
+  border: 1px solid #666;
+}
+
+.App.dark h2,
+.App.dark h4 {
+  color: #ffffff;
+}
