@@ -37,21 +37,22 @@
   }
 }
 
-/* Dark mode support */
+/* ✅ Dark mode styles (only once, cleanly) */
 .App.dark {
-  background-color: #1a1a1a;
-  color: #f0f0f0;
+  background-color: #121212;
+  color: #f1f1f1;
 }
 
-.App.dark button,
 .App.dark input,
-.App.dark select {
-  background-color: #333;
-  color: #f0f0f0;
-  border: 1px solid #666;
+.App.dark select,
+.App.dark button {
+  background-color: #1e1e1e;
+  color: #fff;
+  border: 1px solid #333;
 }
 
 .App.dark h2,
 .App.dark h4 {
   color: #ffffff;
 }
+
