@@ -1,104 +1,82 @@
-body {
-  margin: 0;
-  font-family: 'Poppins', sans-serif;
-  background-color: #f4f6f8;
-  color: #333;
-}
-
+/* App base styles */
 .App {
   text-align: center;
+  font-family: 'Poppins', sans-serif;
+  animation: fadeIn 1s ease-in;
   min-height: 100vh;
   padding: 20px;
-  background-color: #f4f6f8;
-  transition: background-color 0.3s, color 0.3s;
+  background: #f9f9f9;
 }
 
+/* Dark mode styles */
 .App.dark {
-  background-color: #121212;
-  color: #f1f1f1;
+  background: #121212;
+  color: #e0e0e0;
 }
 
-button, select, input {
-  margin: 8px;
-  padding: 10px 15px;
-  font-size: 1rem;
-  border-radius: 10px;
-  border: 1px solid #ccc;
-  background-color: white;
-  transition: all 0.3s;
+.App.dark input,
+.App.dark select,
+.App.dark button {
+  background-color: #1f1f1f;
+  color: #e0e0e0;
+  border: 1px solid #444;
 }
 
-.App.dark button, 
-.App.dark select, 
-.App.dark input {
-  background-color: #1e1e1e;
-  color: #f1f1f1;
-  border: 1px solid #555;
+.App.dark h1, 
+.App.dark h2, 
+.App.dark h3, 
+.App.dark h4 {
+  color: #f0f0f0;
 }
 
-button:hover {
-  background-color: #007BFF;
-  color: white;
-  cursor: pointer;
-}
-
-.App.dark button:hover {
-  background-color: #0056b3;
-}
-
-section {
-  background: white;
-  margin: 20px auto;
-  padding: 20px;
-  max-width: 800px;
-  border-radius: 15px;
-  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-  transition: background 0.3s, color 0.3s;
-}
-
-.App.dark section {
-  background: #1e1e1e;
-  box-shadow: 0 8px 16px rgba(255,255,255,0.05);
-}
-
-h1, h2, h4 {
-  margin-top: 10px;
-  margin-bottom: 20px;
-}
-
-img {
-  max-width: 100%;
-  border-radius: 10px;
-  margin: 10px 0;
-}
-
-label {
-  display: block;
-  margin: 10px 0;
-  font-weight: 500;
-}
-
-.loader {
-  border: 6px solid #f3f3f3;
-  border-top: 6px solid #3498db;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  animation: spin 1s linear infinite;
-  margin: 20px auto;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.peripheral-heading {
+/* Peripheral logo */
+.logo {
   font-weight: bold;
   font-style: italic;
   font-size: 3rem;
-  background: linear-gradient(90deg, #FFD700, #8A2BE2, #00BFFF);
+  background: linear-gradient(to right, #ffd700, #a855f7, #3b82f6);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  margin-bottom: 0.5rem;
+}
+
+/* Section styles */
+section {
+  margin: 30px 0;
+}
+
+/* Buttons */
+button {
+  margin: 5px;
+  padding: 10px 20px;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  background-color: #3b82f6;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #2563eb;
+}
+
+/* Inputs and Selects */
+input, select {
+  margin: 5px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+/* Task Image */
+img {
+  margin-top: 10px;
+  border-radius: 10px;
+}
+
+/* Fade-in animation */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
