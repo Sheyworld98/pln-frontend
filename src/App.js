@@ -104,9 +104,9 @@ function App() {
       <section>
         <h2>👤 Profile</h2>
         {loadingProfile ? (
-          <p>Loading profile...</p>
-        ) : profile ? (
-          <div>
+      <div className="loader"></div>
+      ) : profile ? (
+         <div>
             <p><strong>Languages:</strong> {profile.languages?.join(", ") || "N/A"}</p>
             <p><strong>Expertise:</strong> {profile.expertise_domains?.join(", ") || "N/A"}</p>
             <p><strong>Preferred Complexity:</strong> {profile.complexity_level ?? "N/A"}</p>
@@ -183,8 +183,8 @@ function App() {
         <button onClick={fetchTask} className="animated-button">📥 Fetch Task</button>
 
         {loadingTask ? (
-          <p>Loading task...</p>
-        ) : task && (
+       <div className="loader"></div>
+         ) : task && (
           <div>
             <p>{task.task.text}</p>
             {task.content?.image?.url && <img src={task.content.image.url} alt="task visual" />}
