@@ -1,58 +1,79 @@
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background-color: #f4f6f8;
+  color: #333;
+}
+
 .App {
   text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  padding: 20px;
+  background-color: #f4f6f8;
+  transition: background-color 0.3s, color 0.3s;
 }
 
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* ✅ Dark mode styles (only once, cleanly) */
 .App.dark {
   background-color: #121212;
   color: #f1f1f1;
 }
 
-.App.dark input,
-.App.dark select,
-.App.dark button {
+button, select, input {
+  margin: 8px;
+  padding: 10px 15px;
+  font-size: 1rem;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  background-color: white;
+  transition: all 0.3s;
+}
+
+.App.dark button, 
+.App.dark select, 
+.App.dark input {
   background-color: #1e1e1e;
-  color: #fff;
-  border: 1px solid #333;
+  color: #f1f1f1;
+  border: 1px solid #555;
 }
 
-.App.dark h2,
-.App.dark h4 {
-  color: #ffffff;
+button:hover {
+  background-color: #007BFF;
+  color: white;
+  cursor: pointer;
 }
 
+.App.dark button:hover {
+  background-color: #0056b3;
+}
+
+section {
+  background: white;
+  margin: 20px auto;
+  padding: 20px;
+  max-width: 800px;
+  border-radius: 15px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+  transition: background 0.3s, color 0.3s;
+}
+
+.App.dark section {
+  background: #1e1e1e;
+  box-shadow: 0 8px 16px rgba(255,255,255,0.05);
+}
+
+h1, h2, h4 {
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+img {
+  max-width: 100%;
+  border-radius: 10px;
+  margin: 10px 0;
+}
+
+label {
+  display: block;
+  margin: 10px 0;
+  font-weight: 500;
+}

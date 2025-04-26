@@ -14,12 +14,12 @@ function App() {
   const [history, setHistory] = useState([]);
   const [task, setTask] = useState(null);
   const [answer, setAnswer] = useState("");
-  const [showDarkMode, setShowDarkMode] = useState(() => {
-    return localStorage.getItem("darkMode") === "true";
-  });
-  const [lang, setLang] = useState(localStorage.getItem("lang") || "en");
-  const [expertise, setExpertise] = useState(localStorage.getItem("expertise") || "");
-  const [complexity, setComplexity] = useState(localStorage.getItem("complexity") || "");
+  const [showDarkMode, setShowDarkMode] = useState(false);
+  const [lang, setLang] = useState("en");
+  const [expertise, setExpertise] = useState("");
+  const [complexity, setComplexity] = useState("");
+  const [loadingProfile, setLoadingProfile] = useState(false);
+  const [loadingTask, setLoadingTask] = useState(false);
   const [feedbackConsent, setFeedbackConsent] = useState(false);
   const [submission, setSubmission] = useState(null);
 
@@ -28,15 +28,20 @@ function App() {
   }, []);
 
   const fetchAll = async (user) => {
-    const profileRes = await axios.get(`${API_BASE}/profile/${user}`);
-    const scoreRes = await axios.get(`${API_BASE}/score/${user}`);
-    const lbRes = await axios.get(`${API_BASE}/leaderboard`);
-    const histRes = await axios.get(`${API_BASE}/history/${user}`);
-    setProfile(profileRes.data);
-    setScore(scoreRes.data[user] || 0);
-    setLeaderboard(lbRes.data);
-    setHistory(histRes.data);
-    setSubmission(null);
+    setLoadingProfile(true);
+    try {
+      const profileRes = await axios.get(`${API_BASE}/profile/${user}`);
+      const scoreRes = await axios.get(`${API_BASE}/score/${user}`);
+      const lbRes = await axios.get(`${API_BASE}/leaderboard`);
+      const histRes = await axios.get(`${API_BASE}/history/${user}`);
+      setProfile(profileRes.data);
+      setScore(scoreRes.data[user] || 0);
+      setLeaderboard(lbRes.data);
+      setHistory(histRes.data);
+      setSubmission(null);
+    } finally {
+      setLoadingProfile(false);
+    }
   };
 
   const setUser = () => {
@@ -46,19 +51,9 @@ function App() {
     fetchAll(user);
   };
 
-  const handleProfileUpdate = () => {
-    localStorage.setItem("lang", lang);
-    localStorage.setItem("expertise", expertise);
-    localStorage.setItem("complexity", complexity);
-    setProfile({
-      languages: [lang],
-      expertise_domains: [expertise],
-      complexity_level: complexity
-    });
-  };
-
   const fetchTask = async () => {
     if (!selectedUser) return;
+    setLoadingTask(true);
     try {
       const res = await axios.get(`${API_BASE}/task/fetch/${selectedUser}`, {
         params: { lang, topic: expertise, complexity }
@@ -67,6 +62,8 @@ function App() {
       setAnswer("");
     } catch (err) {
       setTask(null);
+    } finally {
+      setLoadingTask(false);
     }
   };
 
@@ -88,49 +85,51 @@ function App() {
 
   return (
     <div className={showDarkMode ? "App dark" : "App"}>
-      <h1><span role="img" aria-label="dashboard">🔠</span> PLN Contributor Dashboard</h1>
-      <button onClick={() => { setShowDarkMode(!showDarkMode); localStorage.setItem("darkMode", !showDarkMode); }}>
-        <span role="img" aria-label="theme-toggle">🌓</span> Toggle {showDarkMode ? "Light" : "Dark"} Mode
+      <h1>🔠 PLN Contributor Dashboard</h1>
+      <button onClick={() => setShowDarkMode(!showDarkMode)} className="animated-button">
+        🌓 Toggle {showDarkMode ? "Light" : "Dark"} Mode
       </button>
 
       <section>
-        <h2><span role="img" aria-label="users">👥</span> Select User:</h2>
+        <h2>👥 Select User:</h2>
         <select onChange={(e) => setSelectedUser(e.target.value)} value={selectedUser}>
           <option>-- Select --</option>
           {users.map(u => <option key={u}>{u}</option>)}
         </select>
         <input placeholder="or enter new user..." value={newUser} onChange={(e) => setNewUser(e.target.value)} />
-        <button onClick={setUser}>Set User</button>
-        <button onClick={() => fetchAll(selectedUser)}>🔄 Refresh</button>
+        <button onClick={setUser} className="animated-button">Set User</button>
+        <button onClick={() => fetchAll(selectedUser)} className="animated-button">🔄 Refresh</button>
       </section>
 
       <section>
-        <h2><span role="img" aria-label="profile">👤</span> Profile</h2>
-        {profile ? (
+        <h2>👤 Profile</h2>
+        {loadingProfile ? (
+          <p>Loading profile...</p>
+        ) : profile ? (
           <div>
             <p><strong>Languages:</strong> {profile.languages?.join(", ") || "N/A"}</p>
             <p><strong>Expertise:</strong> {profile.expertise_domains?.join(", ") || "N/A"}</p>
             <p><strong>Preferred Complexity:</strong> {profile.complexity_level ?? "N/A"}</p>
           </div>
-        ) : <p>Loading profile...</p>}
+        ) : <p>Select a user to see profile</p>}
       </section>
 
       <section>
-        <h2><span role="img" aria-label="score">📊</span> Score</h2>
+        <h2>📊 Score</h2>
         <p>{score} points</p>
         <p>Badge: {score >= 60 ? "🥈 Silver" : "🔰 Newbie"}</p>
       </section>
 
       <section>
-        <h2><span role="img" aria-label="leaderboard">🏆</span> Leaderboard</h2>
+        <h2>🏆 Leaderboard</h2>
         {leaderboard.map(entry => (
           <div key={entry.user_id}>{entry.user_id} — {entry.score} pts</div>
         ))}
       </section>
 
       <section>
-        <h2><span role="img" aria-label="history">📅</span> Labeling History</h2>
-        <button onClick={() => {
+        <h2>📅 Labeling History</h2>
+        <button className="animated-button" onClick={() => {
           const csv = ["Time,Question,Label,Confidence"];
           history.forEach(h => {
             csv.push(`${h.timestamp},${h.question},${h.label},${h.confidence}`);
@@ -148,7 +147,7 @@ function App() {
       </section>
 
       <section>
-        <h2><span role="img" aria-label="task">🧩</span> New Task</h2>
+        <h2>🧩 New Task</h2>
         <label>🌐 Language:
           <select value={lang} onChange={(e) => setLang(e.target.value)}>
             <option value="en">English</option>
@@ -181,11 +180,14 @@ function App() {
             <option value="4">4 (Hard)</option>
           </select>
         </label>
-        <button onClick={() => {fetchTask(); handleProfileUpdate();}}>📥 Fetch Task</button>
-        {task && (
+        <button onClick={fetchTask} className="animated-button">📥 Fetch Task</button>
+
+        {loadingTask ? (
+          <p>Loading task...</p>
+        ) : task && (
           <div>
             <p>{task.task.text}</p>
-            {task.content?.image?.url && <img src={task.content.image.url} alt="task visual" width="200" />}
+            {task.content?.image?.url && <img src={task.content.image.url} alt="task visual" />}
             <div>
               {task.task.choices.map(choice => (
                 <label key={choice.key}>
@@ -193,19 +195,19 @@ function App() {
                 </label>
               ))}
             </div>
-            <button onClick={submitAnswer}>✅ Submit Answer</button>
+            <button onClick={submitAnswer} className="animated-button">✅ Submit Answer</button>
             {submission && <p>✅ Submitted with confidence: {submission.confidence}</p>}
           </div>
         )}
       </section>
 
       <section>
-        <h4><span role="img" aria-label="privacy">🔒</span> Will you take a minute to help us improve our services to you?</h4>
+        <h4>🔒 Will you take a minute to help us improve our services to you?</h4>
         <label>
           <input type="checkbox" checked={feedbackConsent} onChange={() => setFeedbackConsent(!feedbackConsent)} />
           I agree to help improve the service anonymously.
         </label>
-        <p><span role="img" aria-label="shield">🛡️</span> Your participation is anonymous, as well as any data you provide.</p>
+        <p>🛡️ Your participation is anonymous, as well as any data you provide.</p>
       </section>
     </div>
   );
