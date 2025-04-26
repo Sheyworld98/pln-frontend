@@ -17,6 +17,7 @@ function App() {
   const [showDarkMode, setShowDarkMode] = useState(false);
   const [lang, setLang] = useState("en");
   const [expertise, setExpertise] = useState("");
+  const [complexity, setComplexity] = useState("");
   const [feedbackConsent, setFeedbackConsent] = useState(false);
   const [submission, setSubmission] = useState(null);
 
@@ -46,12 +47,9 @@ function App() {
   const fetchTask = async () => {
     if (!selectedUser) return;
     try {
-      const params = { lang };
-if (expertise && expertise.trim()) {
-  params.topic = expertise.trim();
-}
-
-const res = await axios.get(`${API_BASE}/task/fetch/${selectedUser}`, { params });
+      const res = await axios.get(`${API_BASE}/task/fetch/${selectedUser}`, {
+        params: { lang, topic: expertise, complexity }
+      });
       setTask(res.data);
       setAnswer("");
     } catch (err) {
@@ -77,11 +75,13 @@ const res = await axios.get(`${API_BASE}/task/fetch/${selectedUser}`, { params }
 
   return (
     <div className={showDarkMode ? "App dark" : "App"}>
-      <h1>🔠 PLN Contributor Dashboard</h1>
-      <button onClick={() => setShowDarkMode(!showDarkMode)}>🌓 Toggle {showDarkMode ? "Light" : "Dark"} Mode</button>
+      <h1><span role="img" aria-label="dashboard">🔠</span> PLN Contributor Dashboard</h1>
+      <button onClick={() => setShowDarkMode(!showDarkMode)}>
+        <span role="img" aria-label="theme-toggle">🌓</span> Toggle {showDarkMode ? "Light" : "Dark"} Mode
+      </button>
 
       <section>
-        <h2>👥 Select User:</h2>
+        <h2><span role="img" aria-label="users">👥</span> Select User:</h2>
         <select onChange={(e) => setSelectedUser(e.target.value)} value={selectedUser}>
           <option>-- Select --</option>
           {users.map(u => <option key={u}>{u}</option>)}
@@ -92,7 +92,7 @@ const res = await axios.get(`${API_BASE}/task/fetch/${selectedUser}`, { params }
       </section>
 
       <section>
-        <h2>👤 Profile</h2>
+        <h2><span role="img" aria-label="profile">👤</span> Profile</h2>
         {profile ? (
           <div>
             <p><strong>Languages:</strong> {profile.languages?.join(", ") || "N/A"}</p>
@@ -103,20 +103,20 @@ const res = await axios.get(`${API_BASE}/task/fetch/${selectedUser}`, { params }
       </section>
 
       <section>
-        <h2>📊 Score</h2>
+        <h2><span role="img" aria-label="score">📊</span> Score</h2>
         <p>{score} points</p>
         <p>Badge: {score >= 60 ? "🥈 Silver" : "🔰 Newbie"}</p>
       </section>
 
       <section>
-        <h2>🏆 Leaderboard</h2>
+        <h2><span role="img" aria-label="leaderboard">🏆</span> Leaderboard</h2>
         {leaderboard.map(entry => (
           <div key={entry.user_id}>{entry.user_id} — {entry.score} pts</div>
         ))}
       </section>
 
       <section>
-        <h2>📅 Labeling History</h2>
+        <h2><span role="img" aria-label="history">📅</span> Labeling History</h2>
         <button onClick={() => {
           const csv = ["Time,Question,Label,Confidence"];
           history.forEach(h => {
@@ -130,16 +130,44 @@ const res = await axios.get(`${API_BASE}/task/fetch/${selectedUser}`, { params }
           a.click();
         }}>📥 Download CSV</button>
         {history.map((h, i) => (
-          <div key={i}>
-            {h.timestamp} — {h.question} — {h.label} — {h.confidence.toFixed(2)}
-          </div>
+          <div key={i}>{h.timestamp} — {h.question} — {h.label} — {h.confidence.toFixed(2)}</div>
         ))}
       </section>
 
       <section>
-        <h2>🧩 New Task</h2>
-        <label>🌐 Language: <input value={lang} onChange={(e) => setLang(e.target.value)} /></label>
-        <label>🎓 Expertise: <input value={expertise} onChange={(e) => setExpertise(e.target.value)} /></label>
+        <h2><span role="img" aria-label="task">🧩</span> New Task</h2>
+        <label>🌐 Language:
+          <select value={lang} onChange={(e) => setLang(e.target.value)}>
+            <option value="en">English</option>
+            <option value="ar">Arabic</option>
+          </select>
+        </label>
+        <label>🎓 Expertise:
+          <select value={expertise} onChange={(e) => setExpertise(e.target.value)}>
+            <option value="">-- Select --</option>
+            <option value="animals">Animals</option>
+            <option value="construction-site">Construction Site</option>
+            <option value="fashion">Fashion</option>
+            <option value="garage-workshop">Garage Workshop</option>
+            <option value="kitchen">Kitchen</option>
+            <option value="living-room">Living Room</option>
+            <option value="medical-field">Medical Field</option>
+            <option value="music">Music</option>
+            <option value="office">Office</option>
+            <option value="school">School</option>
+            <option value="uae">UAE</option>
+            <option value="underwater">Underwater</option>
+          </select>
+        </label>
+        <label>📈 Complexity:
+          <select value={complexity} onChange={(e) => setComplexity(e.target.value)}>
+            <option value="">-- Any --</option>
+            <option value="1">1 (Easy)</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4 (Hard)</option>
+          </select>
+        </label>
         <button onClick={fetchTask}>📥 Fetch Task</button>
         {task && (
           <div>
@@ -159,12 +187,12 @@ const res = await axios.get(`${API_BASE}/task/fetch/${selectedUser}`, { params }
       </section>
 
       <section>
-      <h4>🔒 Will you take a minute to help us improve our services to you?</h4>
-<label>
-  <input type="checkbox" checked={feedbackConsent} onChange={() => setFeedbackConsent(!feedbackConsent)} />
-  I agree to help improve the service anonymously.
-</label>
-<p>🛡️ Your participation is anonymous, as well as any data you provide.</p>
+        <h4><span role="img" aria-label="privacy">🔒</span> Will you take a minute to help us improve our services to you?</h4>
+        <label>
+          <input type="checkbox" checked={feedbackConsent} onChange={() => setFeedbackConsent(!feedbackConsent)} />
+          I agree to help improve the service anonymously.
+        </label>
+        <p><span role="img" aria-label="shield">🛡️</span> Your participation is anonymous, as well as any data you provide.</p>
       </section>
     </div>
   );
