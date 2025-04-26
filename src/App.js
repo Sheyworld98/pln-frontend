@@ -14,10 +14,12 @@ function App() {
   const [history, setHistory] = useState([]);
   const [task, setTask] = useState(null);
   const [answer, setAnswer] = useState("");
-  const [showDarkMode, setShowDarkMode] = useState(false);
-  const [lang, setLang] = useState("en");
-  const [expertise, setExpertise] = useState("");
-  const [complexity, setComplexity] = useState("");
+  const [showDarkMode, setShowDarkMode] = useState(() => {
+    return localStorage.getItem("darkMode") === "true";
+  });
+  const [lang, setLang] = useState(localStorage.getItem("lang") || "en");
+  const [expertise, setExpertise] = useState(localStorage.getItem("expertise") || "");
+  const [complexity, setComplexity] = useState(localStorage.getItem("complexity") || "");
   const [feedbackConsent, setFeedbackConsent] = useState(false);
   const [submission, setSubmission] = useState(null);
 
@@ -42,6 +44,17 @@ function App() {
     if (!user) return;
     setSelectedUser(user);
     fetchAll(user);
+  };
+
+  const handleProfileUpdate = () => {
+    localStorage.setItem("lang", lang);
+    localStorage.setItem("expertise", expertise);
+    localStorage.setItem("complexity", complexity);
+    setProfile({
+      languages: [lang],
+      expertise_domains: [expertise],
+      complexity_level: complexity
+    });
   };
 
   const fetchTask = async () => {
@@ -76,7 +89,7 @@ function App() {
   return (
     <div className={showDarkMode ? "App dark" : "App"}>
       <h1><span role="img" aria-label="dashboard">🔠</span> PLN Contributor Dashboard</h1>
-      <button onClick={() => setShowDarkMode(!showDarkMode)}>
+      <button onClick={() => { setShowDarkMode(!showDarkMode); localStorage.setItem("darkMode", !showDarkMode); }}>
         <span role="img" aria-label="theme-toggle">🌓</span> Toggle {showDarkMode ? "Light" : "Dark"} Mode
       </button>
 
@@ -168,7 +181,7 @@ function App() {
             <option value="4">4 (Hard)</option>
           </select>
         </label>
-        <button onClick={fetchTask}>📥 Fetch Task</button>
+        <button onClick={() => {fetchTask(); handleProfileUpdate();}}>📥 Fetch Task</button>
         {task && (
           <div>
             <p>{task.task.text}</p>
