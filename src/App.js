@@ -85,7 +85,10 @@ function App() {
 
   return (
     <div className={showDarkMode ? "App dark" : "App"}>
-      <h1>🔠 PLN Contributor Dashboard</h1>
+      <h1 className="peripheral-heading">
+  Peripheral <span role="img" aria-label="party">🎉</span>
+</h1>
+<h2><span role="img" aria-label="dashboard">🔠</span> PLN Contributor Dashboard</h2>
       <button onClick={() => setShowDarkMode(!showDarkMode)} className="animated-button">
         🌓 Toggle {showDarkMode ? "Light" : "Dark"} Mode
       </button>

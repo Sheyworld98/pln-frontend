@@ -92,3 +92,13 @@ label {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+.peripheral-heading {
+  font-weight: bold;
+  font-style: italic;
+  font-size: 3rem;
+  background: linear-gradient(90deg, #FFD700, #8A2BE2, #00BFFF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.5rem;
+}
