@@ -58,22 +58,11 @@ function App() {
       const res = await axios.get(`${API_BASE}/task/fetch/${selectedUser}`, {
         params: { lang, topic: expertise, complexity }
       });
-
-      if (res.data && !res.data.error && res.data.task) {
-        setTask(res.data);
-        setAnswer("");
-        toast.success("Task fetched successfully!");
-      } else {
-        toast.error(res.data.error || "No new task available.");
-        setTask(null);
-      }
-
-      await axios.post(`${API_BASE}/profile/update/${selectedUser}`, { lang, expertise, complexity });
-      await fetchAll(selectedUser);
-
+      setTask(res.data);
+      setAnswer("");
+      // 🚫 No profile/history reload here, prevents disappearing!
     } catch (err) {
-      console.error("Fetch task error:", err);
-      toast.error("Failed to fetch task.");
+      console.error(err);
       setTask(null);
     }
     setLoading(false);
