@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { toast, ToastContainer } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 import "./App.css";
-import { Toaster, toast } from "react-hot-toast";
-
 
 const API_BASE = "https://pln-backend1-1.onrender.com";
 
@@ -29,15 +29,19 @@ function App() {
   }, []);
 
   const fetchAll = async (user) => {
-    const profileRes = await axios.get(`${API_BASE}/profile/${user}`);
-    const scoreRes = await axios.get(`${API_BASE}/score/${user}`);
-    const lbRes = await axios.get(`${API_BASE}/leaderboard`);
-    const histRes = await axios.get(`${API_BASE}/history/${user}`);
-    setProfile(profileRes.data);
-    setScore(scoreRes.data[user] || 0);
-    setLeaderboard(lbRes.data);
-    setHistory(histRes.data);
-    setSubmission(null);
+    try {
+      const profileRes = await axios.get(`${API_BASE}/profile/${user}`);
+      const scoreRes = await axios.get(`${API_BASE}/score/${user}`);
+      const lbRes = await axios.get(`${API_BASE}/leaderboard`);
+      const histRes = await axios.get(`${API_BASE}/history/${user}`);
+      setProfile(profileRes.data);
+      setScore(scoreRes.data[user] || 0);
+      setLeaderboard(lbRes.data);
+      setHistory(histRes.data);
+      setSubmission(null);
+    } catch (err) {
+      console.error("Error fetching all data:", err);
+    }
   };
 
   const setUser = async () => {
@@ -54,32 +58,29 @@ function App() {
       const res = await axios.get(`${API_BASE}/task/fetch/${selectedUser}`, {
         params: { lang, topic: expertise, complexity }
       });
-  
+
       if (res.data && !res.data.error && res.data.task) {
-        // Only accept good tasks
         setTask(res.data);
         setAnswer("");
         toast.success("Task fetched successfully!");
       } else {
-        toast.error(res.data.error || "No new task available right now.");
+        toast.error(res.data.error || "No new task available.");
         setTask(null);
       }
-  
-      // Update profile info only after successful task
+
       await axios.post(`${API_BASE}/profile/update/${selectedUser}`, { lang, expertise, complexity });
       await fetchAll(selectedUser);
-  
+
     } catch (err) {
-      console.error(err);
+      console.error("Fetch task error:", err);
       toast.error("Failed to fetch task.");
       setTask(null);
     }
     setLoading(false);
-  };  
-  
+  };
+
   const submitAnswer = async () => {
     if (!task || !answer) return;
-    setLoading(true);
     try {
       const res = await axios.post(`${API_BASE}/task/submit/${task.id}`, {
         user_id: selectedUser,
@@ -88,18 +89,18 @@ function App() {
         track_id: task.track_id
       });
       setSubmission(res.data);
-      toast.success("✅ Task submitted successfully!");
+      toast.success("Answer submitted successfully!");
       await fetchAll(selectedUser);
       setTask(null);
     } catch (err) {
-      console.error(err);
+      console.error("Submit error:", err);
+      toast.error("Failed to submit answer.");
     }
-    setLoading(false);
-  };  
-  
+  };
+
   return (
     <div className={`App ${showDarkMode ? "dark fade-in" : "fade-in"}`}>
-      <Toaster />
+      <ToastContainer />
       <h1 className="logo">Peripheral <span role="img" aria-label="party">🎉</span></h1>
       <h2><span role="img" aria-label="dashboard">🔠</span> PLN Contributor Dashboard</h2>
 
