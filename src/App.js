@@ -49,12 +49,18 @@ function App() {
     if (!selectedUser) return;
     setLoading(true);
     try {
+      await axios.post(`${API_BASE}/profile/update/${selectedUser}`, {
+        lang,
+        expertise,
+        complexity
+      }); // 👈 Update profile before fetching
       const res = await axios.get(`${API_BASE}/task/fetch/${selectedUser}`, {
         params: { lang, topic: expertise, complexity }
       });
       setTask(res.data);
       setAnswer("");
-      // 🚫 No profile/history reload here, prevents disappearing!
+      setSubmission(null); // Clear previous submission
+      await fetchAll(selectedUser); // Refresh profile info
     } catch (err) {
       console.error(err);
       setTask(null);
@@ -73,13 +79,13 @@ function App() {
         track_id: task.track_id
       });
       setSubmission(res.data);
-      await fetchAll(selectedUser); // ✅ Refresh only after submit succeeds
-      setTask(null); // Clear task so user knows it's submitted
+      await fetchAll(selectedUser); // ⬅️ This refreshes Labeling History immediately
+      setTask(null); // Clear after submitting
     } catch (err) {
       console.error(err);
     }
     setLoading(false);
-  };
+  };  
   
   return (
     <div className={`App ${showDarkMode ? "dark fade-in" : "fade-in"}`}>
