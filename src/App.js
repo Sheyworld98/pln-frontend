@@ -80,7 +80,6 @@ function App() {
       setSubmission(res.data);
       toast.success("Answer submitted successfully!");
       await fetchAll(selectedUser);
-      setTask(null);
     } catch (err) {
       console.error("Submit error:", err);
       toast.error("Failed to submit answer.");
