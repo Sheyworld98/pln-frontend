@@ -31,14 +31,9 @@ function App() {
   const fetchAll = async (user) => {
     try {
       const profileRes = await axios.get(`${API_BASE}/profile/${user}`);
-      const scoreRes = await axios.get(`${API_BASE}/score/${user}`);
       const lbRes = await axios.get(`${API_BASE}/leaderboard`);
-      const histRes = await axios.get(`${API_BASE}/history/${user}`);
       setProfile(profileRes.data);
-      setScore(scoreRes.data[user] || 0);
       setLeaderboard(lbRes.data);
-      setHistory(histRes.data);
-      setSubmission(null);
     } catch (err) {
       console.error("Error fetching all data:", err);
     }
@@ -58,7 +53,7 @@ function App() {
       const res = await axios.get(`${API_BASE}/task/fetch/${selectedUser}`, {
         params: { lang, topic: expertise, complexity }
       });
-  
+
       if (res.data && !res.data.error && res.data.task) {
         setTask(res.data);
         setAnswer("");
@@ -67,12 +62,10 @@ function App() {
         toast.error(res.data.error || "No new task available.");
         setTask(null);
       }
-  
-      // 🛠 Update profile separately without refetching everything
+
       await axios.post(`${API_BASE}/profile/update/${selectedUser}`, { lang, expertise, complexity });
-  
-      // ❌ Don't call fetchAll() immediately — it wipes task!
-  
+      await fetchAll(selectedUser);
+
     } catch (err) {
       console.error("Fetch task error:", err);
       toast.error("Failed to fetch task.");
@@ -80,10 +73,9 @@ function App() {
     }
     setLoading(false);
   };
-  
+
   const submitAnswer = async () => {
     if (!task || !answer) return;
-    setLoading(true);
     try {
       const res = await axios.post(`${API_BASE}/task/submit/${task.id}`, {
         user_id: selectedUser,
@@ -92,15 +84,21 @@ function App() {
         track_id: task.track_id
       });
       setSubmission(res.data);
-      toast.success("✅ Task submitted successfully!"); // 🎉 Popup here
-      await fetchAll(selectedUser);
+      toast.success("Answer submitted successfully!");
+
+      const histRes = await axios.get(`${API_BASE}/history/${selectedUser}`);
+      setHistory(histRes.data);
+
+      const scoreRes = await axios.get(`${API_BASE}/score/${selectedUser}`);
+      setScore(scoreRes.data[selectedUser] || 0);
+
       setTask(null);
+
     } catch (err) {
-      console.error(err);
-      toast.error("❌ Submission failed. Try again."); // Optional: error toast
+      console.error("Submit error:", err);
+      toast.error("Failed to submit answer.");
     }
-    setLoading(false);
-  };  
+  };
 
   return (
     <div className={`App ${showDarkMode ? "dark fade-in" : "fade-in"}`}>
