@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "./App.css";
+import { Toaster, toast } from "react-hot-toast";
+
 
 const API_BASE = "https://pln-backend1-1.onrender.com";
 
@@ -79,6 +81,7 @@ function App() {
         track_id: task.track_id
       });
       setSubmission(res.data);
+      toast.success("✅ Task submitted successfully!");
       await fetchAll(selectedUser);
       setTask(null);
     } catch (err) {
@@ -89,6 +92,7 @@ function App() {
   
   return (
     <div className={`App ${showDarkMode ? "dark fade-in" : "fade-in"}`}>
+      <Toaster />
       <h1 className="logo">Peripheral <span role="img" aria-label="party">🎉</span></h1>
       <h2><span role="img" aria-label="dashboard">🔠</span> PLN Contributor Dashboard</h2>
 
