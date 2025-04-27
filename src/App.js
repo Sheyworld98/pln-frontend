@@ -54,14 +54,12 @@ function App() {
       });
       setTask(res.data);
       setAnswer("");
-      // Save profile info only
       await axios.post(`${API_BASE}/profile/update/${selectedUser}`, { lang, expertise, complexity });
-      // ❌ Don't call fetchAll here
     } catch (err) {
       setTask(null);
     }
     setLoading(false);
-  };  
+  };
 
   const submitAnswer = async () => {
     if (!task || !answer) return;
