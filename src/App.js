@@ -53,14 +53,14 @@ function App() {
         lang,
         expertise,
         complexity
-      }); // 👈 Update profile before fetching
+      });
       const res = await axios.get(`${API_BASE}/task/fetch/${selectedUser}`, {
         params: { lang, topic: expertise, complexity }
       });
       setTask(res.data);
       setAnswer("");
-      setSubmission(null); // Clear previous submission
-      await fetchAll(selectedUser); // Refresh profile info
+      setSubmission(null);
+      await fetchAll(selectedUser);
     } catch (err) {
       console.error(err);
       setTask(null);
@@ -79,8 +79,8 @@ function App() {
         track_id: task.track_id
       });
       setSubmission(res.data);
-      await fetchAll(selectedUser); // ⬅️ This refreshes Labeling History immediately
-      setTask(null); // Clear after submitting
+      await fetchAll(selectedUser);
+      setTask(null);
     } catch (err) {
       console.error(err);
     }
