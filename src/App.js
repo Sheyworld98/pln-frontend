@@ -49,6 +49,7 @@ function App() {
   const fetchTask = async () => {
     if (!selectedUser) return;
     setLoading(true);
+  
     try {
       const res = await axios.get(`${API_BASE}/task/fetch/${selectedUser}`, {
         params: { lang, topic: expertise, complexity }
@@ -62,20 +63,24 @@ function App() {
         toast.error(res.data.error || "No new task available.");
         setTask(null);
       }
-  
-      // Only update profile, do not reload everything
-      await axios.post(`${API_BASE}/profile/update/${selectedUser}`, { lang, expertise, complexity });
-      
-      const profileRes = await axios.get(`${API_BASE}/profile/${selectedUser}`);
-      setProfile(profileRes.data);
-  
     } catch (err) {
       console.error("Fetch task error:", err);
       toast.error("Failed to fetch task.");
       setTask(null);
     }
+  
+    // 🔥 This part is SEPARATE! Even if updating profile fails, task should stay
+    try {
+      await axios.post(`${API_BASE}/profile/update/${selectedUser}`, { lang, expertise, complexity });
+      await fetchAll(selectedUser);
+    } catch (err) {
+      console.error("Profile update failed:", err);
+      toast.warn("Profile update failed, but task fetched.");
+    }
+  
     setLoading(false);
-  };  
+  };
+   
 
   const submitAnswer = async () => {
     if (!task || !answer) return;
