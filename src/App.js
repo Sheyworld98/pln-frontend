@@ -58,18 +58,30 @@ function App() {
       const res = await axios.get(`${API_BASE}/task/fetch/${selectedUser}`, {
         params: { lang, topic: expertise, complexity }
       });
-      setTask(res.data);
-      setAnswer("");
-      // 🚫 No profile/history reload here, prevents disappearing!
+  
+      if (res.data && !res.data.error && res.data.task) {
+        setTask(res.data);
+        setAnswer("");
+        toast.success("Task fetched successfully!");
+      } else {
+        toast.error(res.data.error || "No new task available.");
+        setTask(null);
+      }
+  
+      // Update profile silently WITHOUT refreshing everything
+      await axios.post(`${API_BASE}/profile/update/${selectedUser}`, { lang, expertise, complexity });
+  
     } catch (err) {
-      console.error(err);
+      console.error("Fetch task error:", err);
+      toast.error("Failed to fetch task.");
       setTask(null);
     }
     setLoading(false);
-  };
+  };  
 
   const submitAnswer = async () => {
     if (!task || !answer) return;
+    setLoading(true);
     try {
       const res = await axios.post(`${API_BASE}/task/submit/${task.id}`, {
         user_id: selectedUser,
@@ -78,13 +90,15 @@ function App() {
         track_id: task.track_id
       });
       setSubmission(res.data);
-      toast.success("Answer submitted successfully!");
+      toast.success("✅ Task submitted successfully!"); // 🎉 Popup here
       await fetchAll(selectedUser);
+      setTask(null);
     } catch (err) {
-      console.error("Submit error:", err);
-      toast.error("Failed to submit answer.");
+      console.error(err);
+      toast.error("❌ Submission failed. Try again."); // Optional: error toast
     }
-  };
+    setLoading(false);
+  };  
 
   return (
     <div className={`App ${showDarkMode ? "dark fade-in" : "fade-in"}`}>
