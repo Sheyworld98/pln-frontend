@@ -68,8 +68,10 @@ function App() {
         setTask(null);
       }
   
-      // Update profile silently WITHOUT refreshing everything
+      // 🛠 Update profile separately without refetching everything
       await axios.post(`${API_BASE}/profile/update/${selectedUser}`, { lang, expertise, complexity });
+  
+      // ❌ Don't call fetchAll() immediately — it wipes task!
   
     } catch (err) {
       console.error("Fetch task error:", err);
@@ -77,8 +79,8 @@ function App() {
       setTask(null);
     }
     setLoading(false);
-  };  
-
+  };
+  
   const submitAnswer = async () => {
     if (!task || !answer) return;
     setLoading(true);
