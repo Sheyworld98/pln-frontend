@@ -51,24 +51,31 @@ function App() {
     if (!selectedUser) return;
     setLoading(true);
     try {
-      await axios.post(`${API_BASE}/profile/update/${selectedUser}`, {
-        lang,
-        expertise,
-        complexity
-      });
       const res = await axios.get(`${API_BASE}/task/fetch/${selectedUser}`, {
         params: { lang, topic: expertise, complexity }
       });
-      setTask(res.data);
-      setAnswer("");
-      setSubmission(null);
+  
+      if (res.data && !res.data.error && res.data.task) {
+        // Only accept good tasks
+        setTask(res.data);
+        setAnswer("");
+        toast.success("Task fetched successfully!");
+      } else {
+        toast.error(res.data.error || "No new task available right now.");
+        setTask(null);
+      }
+  
+      // Update profile info only after successful task
+      await axios.post(`${API_BASE}/profile/update/${selectedUser}`, { lang, expertise, complexity });
       await fetchAll(selectedUser);
+  
     } catch (err) {
       console.error(err);
+      toast.error("Failed to fetch task.");
       setTask(null);
     }
     setLoading(false);
-  };
+  };  
   
   const submitAnswer = async () => {
     if (!task || !answer) return;
