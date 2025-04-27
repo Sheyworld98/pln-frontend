@@ -54,15 +54,17 @@ function App() {
       });
       setTask(res.data);
       setAnswer("");
-      await axios.post(`${API_BASE}/profile/update/${selectedUser}`, { lang, expertise, complexity });
+      // 🚫 No profile/history reload here, prevents disappearing!
     } catch (err) {
+      console.error(err);
       setTask(null);
     }
     setLoading(false);
   };
-
+  
   const submitAnswer = async () => {
     if (!task || !answer) return;
+    setLoading(true);
     try {
       const res = await axios.post(`${API_BASE}/task/submit/${task.id}`, {
         user_id: selectedUser,
@@ -71,12 +73,14 @@ function App() {
         track_id: task.track_id
       });
       setSubmission(res.data);
-      await fetchAll(selectedUser);
+      await fetchAll(selectedUser); // ✅ Refresh only after submit succeeds
+      setTask(null); // Clear task so user knows it's submitted
     } catch (err) {
       console.error(err);
     }
+    setLoading(false);
   };
-
+  
   return (
     <div className={`App ${showDarkMode ? "dark fade-in" : "fade-in"}`}>
       <h1 className="logo">Peripheral <span role="img" aria-label="party">🎉</span></h1>
