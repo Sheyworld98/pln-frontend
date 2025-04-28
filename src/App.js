@@ -68,7 +68,6 @@ function App() {
         setTask(null);
       }
       await fetchAll(selectedUser);
-
     } catch (err) {
       console.error("Fetch task error:", err);
       toast.error("Failed to fetch task.");
@@ -89,11 +88,22 @@ function App() {
       toast.success("Answer submitted successfully!");
       setTask(null);
       await fetchAll(selectedUser);
+
+      if (score + 20 >= 50 && score < 50) {
+        toast("🎉 Good job reaching 50 points! 🎉");
+      }
+
     } catch (err) {
       console.error("Submit error:", err);
       toast.error("Failed to submit answer.");
     }
   };
+
+  const getBadge = (score) => {
+    if (score >= 100) return "🥇 Gold";
+    if (score >= 50) return "🥈 Silver";
+    return "🔰 Newbie";
+  }
 
   return (
     <div className={`App ${showDarkMode ? "dark fade-in" : "fade-in"}`}>
@@ -124,6 +134,7 @@ function App() {
             <p><strong>Expertise:</strong> {profile.expertise_domains?.join(", ") || "N/A"}</p>
             <p><strong>Preferred Complexity:</strong> {profile.complexity_level ?? "N/A"}</p>
             <p><strong>Score:</strong> {score} pts</p>
+            <p><strong>Badge:</strong> {getBadge(score)}</p>
           </div>
         ) : <p>Loading profile...</p>}
       </section>
@@ -185,7 +196,7 @@ function App() {
         <button onClick={() => {
           const csv = ["Time,Question,Label,Confidence"];
           history.forEach(h => {
-            csv.push(`${h.timestamp},${h.question},${h.label},${h.confidence}`);
+            csv.push(`${h.timestamp || new Date().toISOString()},${h.question},${h.label},${h.confidence}`);
           });
           const blob = new Blob([csv.join("\n")], { type: "text/csv" });
           const url = URL.createObjectURL(blob);
@@ -195,7 +206,7 @@ function App() {
           a.click();
         }}>📥 Download CSV</button>
         {history.map((h, i) => (
-          <div key={i}>{h.timestamp} — {h.question} — {h.label} — {h.confidence.toFixed(2)}</div>
+          <div key={i}>{h.timestamp || new Date().toISOString()} — {h.question} — {h.label} — {h.confidence.toFixed(2)}</div>
         ))}
       </section>
 
