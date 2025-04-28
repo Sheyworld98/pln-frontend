@@ -54,11 +54,9 @@ function App() {
     setLoading(true);
     try {
       const profileUpdateRes = await axios.post(`${API_BASE}/profile/update/${selectedUser}`, { lang, expertise, complexity });
-      console.log("Profile updated:", profileUpdateRes.data);
       const res = await axios.get(`${API_BASE}/task/fetch/${selectedUser}`, {
         params: { lang, topic: expertise, complexity }
       });
-
       if (res.data && res.data.task) {
         setTask(res.data);
         setAnswer("");
@@ -92,7 +90,6 @@ function App() {
       if (score + 20 >= 50 && score < 50) {
         toast("🎉 Good job reaching 50 points! 🎉");
       }
-
     } catch (err) {
       console.error("Submit error:", err);
       toast.error("Failed to submit answer.");
@@ -103,6 +100,11 @@ function App() {
     if (score >= 100) return "🥇 Gold";
     if (score >= 50) return "🥈 Silver";
     return "🔰 Newbie";
+  }
+
+  const formatTimestamp = (timestamp) => {
+    const date = new Date(timestamp);
+    return date.toLocaleString();
   }
 
   return (
@@ -206,7 +208,7 @@ function App() {
           a.click();
         }}>📥 Download CSV</button>
         {history.map((h, i) => (
-          <div key={i}>{h.timestamp || new Date().toISOString()} — {h.question} — {h.label} — {h.confidence.toFixed(2)}</div>
+          <div key={i}>{formatTimestamp(h.timestamp)} — {h.question} — {h.label} — {h.confidence.toFixed(2)}</div>
         ))}
       </section>
 
