@@ -21,7 +21,6 @@ function App() {
   const [expertise, setExpertise] = useState("");
   const [complexity, setComplexity] = useState("");
   const [feedbackConsent, setFeedbackConsent] = useState(false);
-  const [submission, setSubmission] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -32,8 +31,12 @@ function App() {
     try {
       const profileRes = await axios.get(`${API_BASE}/profile/${user}`);
       const lbRes = await axios.get(`${API_BASE}/leaderboard`);
+      const histRes = await axios.get(`${API_BASE}/history/${user}`);
+      const scoreRes = await axios.get(`${API_BASE}/score/${user}`);
       setProfile(profileRes.data);
       setLeaderboard(lbRes.data);
+      setHistory(histRes.data);
+      setScore(scoreRes.data[user] || 0);
     } catch (err) {
       console.error("Error fetching all data:", err);
     }
@@ -49,13 +52,14 @@ function App() {
   const fetchTask = async () => {
     if (!selectedUser) return;
     setLoading(true);
-  
     try {
+      const profileUpdateRes = await axios.post(`${API_BASE}/profile/update/${selectedUser}`, { lang, expertise, complexity });
+      console.log("Profile updated:", profileUpdateRes.data);
       const res = await axios.get(`${API_BASE}/task/fetch/${selectedUser}`, {
         params: { lang, topic: expertise, complexity }
       });
-  
-      if (res.data && !res.data.error && res.data.task) {
+
+      if (res.data && res.data.task) {
         setTask(res.data);
         setAnswer("");
         toast.success("Task fetched successfully!");
@@ -63,24 +67,15 @@ function App() {
         toast.error(res.data.error || "No new task available.");
         setTask(null);
       }
+      await fetchAll(selectedUser);
+
     } catch (err) {
       console.error("Fetch task error:", err);
       toast.error("Failed to fetch task.");
       setTask(null);
     }
-  
-    // 🔥 This part is SEPARATE! Even if updating profile fails, task should stay
-    try {
-      await axios.post(`${API_BASE}/profile/update/${selectedUser}`, { lang, expertise, complexity });
-      await fetchAll(selectedUser);
-    } catch (err) {
-      console.error("Profile update failed:", err);
-      toast.warn("Profile update failed, but task fetched.");
-    }
-  
     setLoading(false);
   };
-   
 
   const submitAnswer = async () => {
     if (!task || !answer) return;
@@ -91,17 +86,9 @@ function App() {
         question: task.task.text,
         track_id: task.track_id
       });
-      setSubmission(res.data);
       toast.success("Answer submitted successfully!");
-
-      const histRes = await axios.get(`${API_BASE}/history/${selectedUser}`);
-      setHistory(histRes.data);
-
-      const scoreRes = await axios.get(`${API_BASE}/score/${selectedUser}`);
-      setScore(scoreRes.data[selectedUser] || 0);
-
       setTask(null);
-
+      await fetchAll(selectedUser);
     } catch (err) {
       console.error("Submit error:", err);
       toast.error("Failed to submit answer.");
@@ -136,6 +123,7 @@ function App() {
             <p><strong>Languages:</strong> {profile.languages?.join(", ") || "N/A"}</p>
             <p><strong>Expertise:</strong> {profile.expertise_domains?.join(", ") || "N/A"}</p>
             <p><strong>Preferred Complexity:</strong> {profile.complexity_level ?? "N/A"}</p>
+            <p><strong>Score:</strong> {score} pts</p>
           </div>
         ) : <p>Loading profile...</p>}
       </section>
@@ -176,7 +164,7 @@ function App() {
         </label>
         <button onClick={fetchTask}>📥 Fetch Task</button>
         {loading && <p>Loading task...</p>}
-        {task && (
+        {task && task.task && (
           <div>
             <p>{task.task.text}</p>
             {task.content?.image?.url && <img src={task.content.image.url} alt="task visual" width="200" />}
@@ -188,7 +176,6 @@ function App() {
               ))}
             </div>
             <button onClick={submitAnswer}>✅ Submit Answer</button>
-            {submission && <p>✅ Submitted with confidence: {submission.confidence}</p>}
           </div>
         )}
       </section>
