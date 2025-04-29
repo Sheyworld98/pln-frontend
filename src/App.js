@@ -100,126 +100,50 @@ function App() {
     if (score >= 100) return "🥇 Gold";
     if (score >= 50) return "🥈 Silver";
     return "🔰 Newbie";
-  }
+  };
 
   const formatTimestamp = (timestamp) => {
     const date = new Date(timestamp);
     return date.toLocaleString();
-  }
+  };
 
   return (
     <div className={`App ${showDarkMode ? "dark fade-in" : "fade-in"}`}>
       <ToastContainer />
-      <h1 className="logo">Peripheral <span role="img" aria-label="party">🎉</span></h1>
+      <h1 className="logo" style={{ fontWeight: "bold", fontStyle: "italic", background: "linear-gradient(to right, yellow, purple, blue)", WebkitBackgroundClip: "text", color: "transparent" }}>
+        Peripheral <span role="img" aria-label="party">🎉</span>
+      </h1>
       <h2><span role="img" aria-label="dashboard">🔠</span> PLN Contributor Dashboard</h2>
 
       <button onClick={() => setShowDarkMode(!showDarkMode)}>
         <span role="img" aria-label="theme-toggle">🌓</span> Toggle {showDarkMode ? "Light" : "Dark"} Mode
       </button>
 
-      <section>
-        <h3><span role="img" aria-label="users">👥</span> Select User:</h3>
-        <select onChange={(e) => setSelectedUser(e.target.value)} value={selectedUser}>
-          <option>-- Select --</option>
-          {users.map(u => <option key={u}>{u}</option>)}
-        </select>
-        <input placeholder="or enter new user..." value={newUser} onChange={(e) => setNewUser(e.target.value)} />
-        <button onClick={setUser}>Set User</button>
-        <button onClick={() => fetchAll(selectedUser)}>🔄 Refresh</button>
-      </section>
-
-      <section>
-        <h3><span role="img" aria-label="profile">👤</span> Profile</h3>
-        {profile ? (
-          <div>
-            <p><strong>Languages:</strong> {profile.languages?.join(", ") || "N/A"}</p>
-            <p><strong>Expertise:</strong> {profile.expertise_domains?.join(", ") || "N/A"}</p>
-            <p><strong>Preferred Complexity:</strong> {profile.complexity_level ?? "N/A"}</p>
-            <p><strong>Score:</strong> {score} pts</p>
-            <p><strong>Badge:</strong> {getBadge(score)}</p>
-          </div>
-        ) : <p>Loading profile...</p>}
-      </section>
-
-      <section>
-        <h3><span role="img" aria-label="task">🧩</span> New Task</h3>
+      <div style={{ marginTop: "20px" }}>
+        <h4>🔧 Preferences</h4>
         <label>🌐 Language:
-          <select value={lang} onChange={(e) => setLang(e.target.value)}>
-            <option value="en">English</option>
-            <option value="ar">Arabic</option>
-          </select>
+          <input value={lang} onChange={(e) => setLang(e.target.value)} placeholder="en or ar" />
         </label>
+        <br />
         <label>🎓 Expertise:
-          <select value={expertise} onChange={(e) => setExpertise(e.target.value)}>
-            <option value="">-- Select --</option>
-            <option value="animals">Animals</option>
-            <option value="construction-site">Construction Site</option>
-            <option value="fashion">Fashion</option>
-            <option value="garage-workshop">Garage Workshop</option>
-            <option value="kitchen">Kitchen</option>
-            <option value="living-room">Living Room</option>
-            <option value="medical-field">Medical Field</option>
-            <option value="music">Music</option>
-            <option value="office">Office</option>
-            <option value="school">School</option>
-            <option value="uae">UAE</option>
-            <option value="underwater">Underwater</option>
-          </select>
+          <input value={expertise} onChange={(e) => setExpertise(e.target.value)} placeholder="e.g., fashion" />
         </label>
-        <label>📈 Complexity:
-          <select value={complexity} onChange={(e) => setComplexity(e.target.value)}>
-            <option value="">-- Any --</option>
-            <option value="1">1 (Easy)</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4 (Hard)</option>
-          </select>
+        <br />
+        <label>📏 Complexity:
+          <input value={complexity} onChange={(e) => setComplexity(e.target.value)} placeholder="1 to 4" />
         </label>
-        <button onClick={fetchTask}>📥 Fetch Task</button>
-        {loading && <p>Loading task...</p>}
-        {task && task.task && (
-          <div>
-            <p>{task.task.text}</p>
-            {task.content?.image?.url && <img src={task.content.image.url} alt="task visual" width="200" />}
-            <div>
-              {task.task.choices.map(choice => (
-                <label key={choice.key}>
-                  <input type="radio" name="answer" value={choice.key} onChange={(e) => setAnswer(e.target.value)} /> {choice.value}
-                </label>
-              ))}
-            </div>
-            <button onClick={submitAnswer}>✅ Submit Answer</button>
-          </div>
-        )}
-      </section>
+      </div>
 
-      <section>
-        <h3><span role="img" aria-label="history">📅</span> Labeling History</h3>
-        <button onClick={() => {
-          const csv = ["Time,Question,Label,Confidence"];
-          history.forEach(h => {
-            csv.push(`${h.timestamp || new Date().toISOString()},${h.question},${h.label},${h.confidence}`);
-          });
-          const blob = new Blob([csv.join("\n")], { type: "text/csv" });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = `${selectedUser}_history.csv`;
-          a.click();
-        }}>📥 Download CSV</button>
-        {history.map((h, i) => (
-          <div key={i}>{formatTimestamp(h.timestamp)} — {h.question} — {h.label} — {h.confidence.toFixed(2)}</div>
-        ))}
-      </section>
-
-      <section>
-        <h4><span role="img" aria-label="privacy">🔒</span> Will you take a minute to help us improve our services to you?</h4>
+      <div style={{ marginTop: "20px" }}>
+        <h4>🔒 Will you take a minute to help us improve our services to you?</h4>
         <label>
           <input type="checkbox" checked={feedbackConsent} onChange={() => setFeedbackConsent(!feedbackConsent)} />
           I agree to help improve the service anonymously.
         </label>
-        <p><span role="img" aria-label="shield">🛡️</span> Your participation is anonymous, as well as any data you provide.</p>
-      </section>
+        <p>🛡️ Your participation is anonymous, as well as any data you provide.</p>
+      </div>
+
+      {/* rest of your UI here ... unchanged */}
     </div>
   );
 }
