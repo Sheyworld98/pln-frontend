@@ -39,17 +39,8 @@ function App() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Load user preferences from extension (if available)
-    if (window.chrome?.storage) {
-      chrome.storage.sync.get(["lang", "expertise", "complexity"], (prefs) => {
-        if (prefs.lang) setLang(prefs.lang);
-        if (prefs.expertise) setExpertise(prefs.expertise);
-        if (prefs.complexity) setComplexity(prefs.complexity);
-      });
-    }
-  
     fetch(`${API_BASE}/users`).then(res => res.json()).then(setUsers);
-  }, []);  
+  }, []);
 
   const fetchAll = async (user) => {
     try {
