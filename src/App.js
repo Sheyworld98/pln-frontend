@@ -6,6 +6,21 @@ import "./App.css";
 
 const API_BASE = "https://pln-backend1-1.onrender.com";
 
+const EXPERTISE_OPTIONS = [
+  "animals",
+  "construction-site",
+  "fashion",
+  "garage-workshop",
+  "kitchen",
+  "living-room",
+  "medical-field",
+  "music",
+  "office",
+  "school",
+  "uae",
+  "underwater"
+];
+
 function App() {
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState("");
@@ -126,7 +141,12 @@ function App() {
         </label>
         <br />
         <label>🎓 Expertise:
-          <input value={expertise} onChange={(e) => setExpertise(e.target.value)} placeholder="e.g., fashion" />
+          <select value={expertise} onChange={(e) => setExpertise(e.target.value)}>
+            <option value="">-- Select Topic --</option>
+            {EXPERTISE_OPTIONS.map(opt => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </select>
         </label>
         <br />
         <label>📏 Complexity:
