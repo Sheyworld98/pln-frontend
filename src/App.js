@@ -1,25 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { toast, ToastContainer } from "react-toastify";
-import 'react-toastify/dist/ReactToastify.css';
 import "./App.css";
 
 const API_BASE = "https://pln-backend1-1.onrender.com";
-
-const EXPERTISE_OPTIONS = [
-  "animals",
-  "construction-site",
-  "fashion",
-  "garage-workshop",
-  "kitchen",
-  "living-room",
-  "medical-field",
-  "music",
-  "office",
-  "school",
-  "uae",
-  "underwater"
-];
 
 function App() {
   const [users, setUsers] = useState([]);
@@ -31,12 +14,11 @@ function App() {
   const [history, setHistory] = useState([]);
   const [task, setTask] = useState(null);
   const [answer, setAnswer] = useState("");
-  const [showDarkMode, setShowDarkMode] = useState(false);
   const [lang, setLang] = useState("en");
   const [expertise, setExpertise] = useState("");
-  const [complexity, setComplexity] = useState("");
-  const [feedbackConsent, setFeedbackConsent] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [complexity, setComplexity] = useState("1");
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminSelectedUser, setAdminSelectedUser] = useState("");
 
   useEffect(() => {
     fetch(`${API_BASE}/users`).then(res => res.json()).then(setUsers);
@@ -45,17 +27,19 @@ function App() {
   const fetchAll = async (user) => {
     try {
       const profileRes = await axios.get(`${API_BASE}/profile/${user}`);
+      const scoreRes = await axios.get(`${API_BASE}/score/${user}`);
       const lbRes = await axios.get(`${API_BASE}/leaderboard`);
       const histRes = await axios.get(`${API_BASE}/history/${user}`);
-      const scoreRes = await axios.get(`${API_BASE}/score/${user}`);
       setProfile(profileRes.data);
+      setScore(scoreRes.data[user] || 0);
       setLeaderboard(lbRes.data);
       setHistory(histRes.data);
-      setScore(scoreRes.data[user] || 0);
     } catch (err) {
-      console.error("Error fetching all data:", err);
+      console.error("Fetch failed", err);
     }
   };
+
+  const activeUser = isAdmin ? adminSelectedUser : selectedUser;
 
   const setUser = async () => {
     const user = newUser || selectedUser;
@@ -65,105 +49,109 @@ function App() {
   };
 
   const fetchTask = async () => {
-    if (!selectedUser) return;
-    setLoading(true);
     try {
-      const profileUpdateRes = await axios.post(`${API_BASE}/profile/update/${selectedUser}`, { lang, expertise, complexity });
-      const res = await axios.get(`${API_BASE}/task/fetch/${selectedUser}`, {
+      const user = activeUser;
+      if (!user) return;
+      await axios.post(`${API_BASE}/profile/update/${user}`, {
+        lang, expertise, complexity
+      });
+
+      const res = await axios.get(`${API_BASE}/task/fetch/${user}`, {
         params: { lang, topic: expertise, complexity }
       });
-      if (res.data && res.data.task) {
+
+      if (res.data?.task) {
         setTask(res.data);
         setAnswer("");
-        toast.success("Task fetched successfully!");
       } else {
-        toast.error(res.data.error || "No new task available.");
         setTask(null);
+        alert("No task available");
       }
-      await fetchAll(selectedUser);
     } catch (err) {
-      console.error("Fetch task error:", err);
-      toast.error("Failed to fetch task.");
-      setTask(null);
+      console.error("Task fetch failed", err);
     }
-    setLoading(false);
   };
 
   const submitAnswer = async () => {
-  if (!task || !answer) return;
-  try {
-    const res = await axios.post(`${API_BASE}/tasks/${task.id}/submit`, {
-      user_id: selectedUser,
-      solution: answer,
-      question: task.task.text,
-      track_id: task.track_id
-    });
-    toast.success("Answer submitted successfully!");
-    setTask(null);
-    await fetchAll(selectedUser);
-
-    if (score + 20 >= 50 && score < 50) {
-      toast("🎉 Good job reaching 50 points! 🎉");
+    try {
+      if (!task || !answer) return;
+      await axios.post(`${API_BASE}/task/submit/${task.id}`, {
+        user_id: activeUser,
+        solution: answer,
+        question: task.task.text,
+        track_id: task.track_id
+      });
+      alert("✅ Submitted!");
+      setTask(null);
+      fetchAll(activeUser);
+    } catch (err) {
+      console.error("Submit failed", err);
     }
-  } catch (err) {
-    console.error("Submit error:", err);
-    toast.error("Failed to submit answer.");
-  }
-};
-
-  const getBadge = (score) => {
-    if (score >= 100) return "🥇 Gold";
-    if (score >= 50) return "🥈 Silver";
-    return "🔰 Newbie";
-  };
-
-  const formatTimestamp = (timestamp) => {
-    const date = new Date(timestamp);
-    return date.toLocaleString();
   };
 
   return (
-    <div className={`App ${showDarkMode ? "dark fade-in" : "fade-in"}`}>
-      <ToastContainer />
-      <h1 className="logo" style={{ fontWeight: "bold", fontStyle: "italic", background: "linear-gradient(to right, yellow, purple, blue)", WebkitBackgroundClip: "text", color: "transparent" }}>
-        Peripheral <span role="img" aria-label="party">🎉</span>
-      </h1>
-      <h2><span role="img" aria-label="dashboard">🔠</span> PLN Contributor Dashboard</h2>
+    <div className="App">
+      <h1>Peripheral 🎉</h1>
+      <h2>🔠 PLN Contributor Dashboard</h2>
+      <label>
+        <input type="checkbox" checked={isAdmin} onChange={() => setIsAdmin(!isAdmin)} />
+        Admin Mode
+      </label>
 
-      <button onClick={() => setShowDarkMode(!showDarkMode)}>
-        <span role="img" aria-label="theme-toggle">🌓</span> Toggle {showDarkMode ? "Light" : "Dark"} Mode
-      </button>
-
-      <div style={{ marginTop: "20px" }}>
-        <h4>🔧 Preferences</h4>
-        <label>🌐 Language:
-          <input value={lang} onChange={(e) => setLang(e.target.value)} placeholder="en or ar" />
-        </label>
-        <br />
-        <label>🎓 Expertise:
-          <select value={expertise} onChange={(e) => setExpertise(e.target.value)}>
-            <option value="">-- Select Topic --</option>
-            {EXPERTISE_OPTIONS.map(opt => (
-              <option key={opt} value={opt}>{opt}</option>
-            ))}
+      {isAdmin ? (
+        <div>
+          <h3>Select user to moderate:</h3>
+          <select onChange={(e) => setAdminSelectedUser(e.target.value)} value={adminSelectedUser}>
+            <option value="">--Select User--</option>
+            {users.map(u => <option key={u}>{u}</option>)}
           </select>
-        </label>
-        <br />
-        <label>📏 Complexity:
-          <input value={complexity} onChange={(e) => setComplexity(e.target.value)} placeholder="1 to 4" />
-        </label>
-      </div>
+        </div>
+      ) : (
+        <section>
+          <h2>👥 Select User:</h2>
+          <select onChange={(e) => setSelectedUser(e.target.value)} value={selectedUser}>
+            <option>-- Select --</option>
+            {users.map(u => <option key={u}>{u}</option>)}
+          </select>
+          <input placeholder="or enter new user..." value={newUser} onChange={(e) => setNewUser(e.target.value)} />
+          <button onClick={setUser}>Set User</button>
+        </section>
+      )}
 
-      <div style={{ marginTop: "20px" }}>
-        <h4>🔒 Will you take a minute to help us improve our services to you?</h4>
-        <label>
-          <input type="checkbox" checked={feedbackConsent} onChange={() => setFeedbackConsent(!feedbackConsent)} />
-          I agree to help improve the service anonymously.
-        </label>
-        <p>🛡️ Your participation is anonymous, as well as any data you provide.</p>
-      </div>
+      {activeUser && (
+        <>
+          <section>
+            <h2>🧩 New Task</h2>
+            <label>🌐 Language: <input value={lang} onChange={(e) => setLang(e.target.value)} /></label><br />
+            <label>📚 Expertise: <input value={expertise} onChange={(e) => setExpertise(e.target.value)} /></label><br />
+            <label>📈 Complexity: <input type="number" min="1" max="3" value={complexity} onChange={(e) => setComplexity(e.target.value)} /></label><br />
+            <button onClick={fetchTask}>Fetch Task</button>
+            {task && (
+              <div>
+                <p>{task.task.text}</p>
+                {task.content?.image?.url && <img src={task.content.image.url} alt="task" width="200" />}
+                {task.task.choices.map(choice => (
+                  <label key={choice.key}>
+                    <input type="radio" name="answer" value={choice.key} onChange={(e) => setAnswer(e.target.value)} />
+                    {choice.value}
+                  </label>
+                ))}
+                <br />
+                <button onClick={submitAnswer}>✅ Submit</button>
+              </div>
+            )}
+          </section>
 
-      {/* rest of your UI here ... unchanged */}
+          <section>
+            <h2>📅 Labeling History</h2>
+            {history.map((h, i) => (
+              <div key={i}>
+                {h.timestamp ? new Date(h.timestamp).toLocaleString() : "N/A"} — {h.question} — {h.label} — {h.confidence?.toFixed(2)}
+              </div>
+            ))}
+          </section>
+        </>
+      )}
     </div>
   );
 }
