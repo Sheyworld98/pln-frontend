@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"; 
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
@@ -20,7 +20,7 @@ function App() {
   const [lang, setLang] = useState("en");
   const [expertise, setExpertise] = useState("");
   const [complexity, setComplexity] = useState("");
-  const [feedbackConsent, setFeedbackConsent] = useState(null);
+  const [consent, setConsent] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -100,34 +100,37 @@ function App() {
     if (score >= 100) return "🥇 Gold";
     if (score >= 50) return "🥈 Silver";
     return "🔰 Newbie";
-  }
+  };
 
   const formatTimestamp = (timestamp) => {
     const date = new Date(timestamp);
     return date.toLocaleString();
-  }
+  };
 
-  if (feedbackConsent === null) {
+  if (consent === null) {
     return (
-      <div className="App">
-        <ToastContainer />
-        <h4><span role="img" aria-label="privacy">🔒</span> Will you take a minute to help us improve our services to you?</h4>
+      <div className="App fade-in">
+        <h2>🔒 Will you take a minute to help us improve our services to you?</h2>
         <label>
-          <input type="radio" name="consent" onChange={() => setFeedbackConsent(true)} /> Yes
+          <input
+            type="radio"
+            name="consent"
+            value="yes"
+            onChange={() => setConsent(true)}
+          /> Yes
         </label>
         <label>
-          <input type="radio" name="consent" onChange={() => setFeedbackConsent(false)} /> No
+          <input
+            type="radio"
+            name="consent"
+            value="no"
+            onChange={() => {
+              setConsent(false);
+              toast("Thank you!");
+              setTimeout(() => setConsent(null), 2000);
+            }}
+          /> No
         </label>
-      </div>
-    );
-  }
-
-  if (feedbackConsent === false) {
-    setTimeout(() => setFeedbackConsent(null), 2000);
-    return (
-      <div className="App">
-        <ToastContainer />
-        <p>Thank you!</p>
       </div>
     );
   }
@@ -135,15 +138,15 @@ function App() {
   return (
     <div className={`App ${showDarkMode ? "dark fade-in" : "fade-in"}`}>
       <ToastContainer />
-      <h1 className="logo">Peripheral <span role="img" aria-label="party">🎉</span></h1>
-      <h2><span role="img" aria-label="dashboard">🔠</span> PLN Contributor Dashboard</h2>
+      <h1 className="logo">Peripheral 🎉</h1>
+      <h2>🔠 PLN Contributor Dashboard</h2>
 
       <button onClick={() => setShowDarkMode(!showDarkMode)}>
-        <span role="img" aria-label="theme-toggle">🌓</span> Toggle {showDarkMode ? "Light" : "Dark"} Mode
+        🌓 Toggle {showDarkMode ? "Light" : "Dark"} Mode
       </button>
 
       <section>
-        <h3><span role="img" aria-label="users">👥</span> Select User:</h3>
+        <h3>👥 Select User:</h3>
         <select onChange={(e) => setSelectedUser(e.target.value)} value={selectedUser}>
           <option>-- Select --</option>
           {users.map(u => <option key={u}>{u}</option>)}
@@ -154,7 +157,7 @@ function App() {
       </section>
 
       <section>
-        <h3><span role="img" aria-label="profile">👤</span> Profile</h3>
+        <h3>👤 Profile</h3>
         {profile ? (
           <div>
             <p><strong>Languages:</strong> {profile.languages?.join(", ") || "N/A"}</p>
@@ -167,7 +170,7 @@ function App() {
       </section>
 
       <section>
-        <h3><span role="img" aria-label="task">🧩</span> New Task</h3>
+        <h3>🧩 New Task</h3>
         <label>🌐 Language:
           <select value={lang} onChange={(e) => setLang(e.target.value)}>
             <option value="en">English</option>
@@ -205,11 +208,24 @@ function App() {
         {task && task.task && (
           <div>
             <p>{task.task.text}</p>
-            {task.content?.image?.url && <img src={task.content.image.url} alt="task visual" width="200" />}
+            {task.content?.image?.url && (
+              <img
+                src={task.content.image.url}
+                alt="task visual"
+                width="1080"
+                height="1920"
+                style={{ objectFit: "cover", maxWidth: "100%" }}
+              />
+            )}
             <div>
               {task.task.choices.map(choice => (
                 <label key={choice.key}>
-                  <input type="radio" name="answer" value={choice.key} onChange={(e) => setAnswer(e.target.value)} /> {choice.value}
+                  <input
+                    type="radio"
+                    name="answer"
+                    value={choice.key}
+                    onChange={(e) => setAnswer(e.target.value)}
+                  /> {choice.value}
                 </label>
               ))}
             </div>
@@ -219,7 +235,7 @@ function App() {
       </section>
 
       <section>
-        <h3><span role="img" aria-label="history">📅</span> Labeling History</h3>
+        <h3>📅 Labeling History</h3>
         <button onClick={() => {
           const csv = ["Time,Question,Label,Confidence"];
           history.forEach(h => {
