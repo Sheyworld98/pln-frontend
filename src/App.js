@@ -20,7 +20,7 @@ function App() {
   const [lang, setLang] = useState("en");
   const [expertise, setExpertise] = useState("");
   const [complexity, setComplexity] = useState("");
-  const [consent, setConsent] = useState(null);
+  const [feedbackConsent, setFeedbackConsent] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -107,151 +107,150 @@ function App() {
     return date.toLocaleString();
   };
 
-  if (consent === null) {
-    return (
-      <div className="App fade-in">
-        <h2>🔒 Will you take a minute to help us improve our services to you?</h2>
-        <label>
-          <input
-            type="radio"
-            name="consent"
-            value="yes"
-            onChange={() => setConsent(true)}
-          /> Yes
-        </label>
-        <label>
-          <input
-            type="radio"
-            name="consent"
-            value="no"
-            onChange={() => {
-              setConsent(false);
-              toast("Thank you!");
-              setTimeout(() => setConsent(null), 2000);
-            }}
-          /> No
-        </label>
-      </div>
-    );
-  }
-
   return (
     <div className={`App ${showDarkMode ? "dark fade-in" : "fade-in"}`}>
       <ToastContainer />
-      <h1 className="logo">Peripheral 🎉</h1>
-      <h2>🔠 PLN Contributor Dashboard</h2>
 
-      <button onClick={() => setShowDarkMode(!showDarkMode)}>
-        🌓 Toggle {showDarkMode ? "Light" : "Dark"} Mode
-      </button>
+      {!feedbackConsent && (
+        <section>
+          <h2>🎉 Peripheral is here, welcome aboard, we are glad to have you!</h2>
+          <h4><span role="img" aria-label="privacy">🔒</span> Will you take a minute to help us improve our services to you?</h4>
+          <label>
+            <input
+              type="radio"
+              name="consent"
+              value="yes"
+              onChange={() => setFeedbackConsent(true)}
+            /> Yes
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="consent"
+              value="no"
+              onChange={() => {
+                toast("Thank you!");
+                setTimeout(() => window.location.reload(), 1500);
+              }}
+            /> No
+          </label>
+          <p><span role="img" aria-label="shield">🛡️</span> Your participation is anonymous, as well as any data you provide.</p>
+        </section>
+      )}
 
-      <section>
-        <h3>👥 Select User:</h3>
-        <select onChange={(e) => setSelectedUser(e.target.value)} value={selectedUser}>
-          <option>-- Select --</option>
-          {users.map(u => <option key={u}>{u}</option>)}
-        </select>
-        <input placeholder="or enter new user..." value={newUser} onChange={(e) => setNewUser(e.target.value)} />
-        <button onClick={setUser}>Set User</button>
-        <button onClick={() => fetchAll(selectedUser)}>🔄 Refresh</button>
-      </section>
+      {feedbackConsent && (
+        <>
+          <h1 className="logo">Peripheral <span role="img" aria-label="party">🎉</span></h1>
+          <h2><span role="img" aria-label="dashboard">🔠</span> PLN Contributor Dashboard</h2>
 
-      <section>
-        <h3>👤 Profile</h3>
-        {profile ? (
-          <div>
-            <p><strong>Languages:</strong> {profile.languages?.join(", ") || "N/A"}</p>
-            <p><strong>Expertise:</strong> {profile.expertise_domains?.join(", ") || "N/A"}</p>
-            <p><strong>Preferred Complexity:</strong> {profile.complexity_level ?? "N/A"}</p>
-            <p><strong>Score:</strong> {score} pts</p>
-            <p><strong>Badge:</strong> {getBadge(score)}</p>
-          </div>
-        ) : <p>Loading profile...</p>}
-      </section>
+          <button onClick={() => setShowDarkMode(!showDarkMode)}>
+            <span role="img" aria-label="theme-toggle">🌓</span> Toggle {showDarkMode ? "Light" : "Dark"} Mode
+          </button>
 
-      <section>
-        <h3>🧩 New Task</h3>
-        <label>🌐 Language:
-          <select value={lang} onChange={(e) => setLang(e.target.value)}>
-            <option value="en">English</option>
-            <option value="ar">Arabic</option>
-          </select>
-        </label>
-        <label>🎓 Expertise:
-          <select value={expertise} onChange={(e) => setExpertise(e.target.value)}>
-            <option value="">-- Select --</option>
-            <option value="animals">Animals</option>
-            <option value="construction-site">Construction Site</option>
-            <option value="fashion">Fashion</option>
-            <option value="garage-workshop">Garage Workshop</option>
-            <option value="kitchen">Kitchen</option>
-            <option value="living-room">Living Room</option>
-            <option value="medical-field">Medical Field</option>
-            <option value="music">Music</option>
-            <option value="office">Office</option>
-            <option value="school">School</option>
-            <option value="uae">UAE</option>
-            <option value="underwater">Underwater</option>
-          </select>
-        </label>
-        <label>📈 Complexity:
-          <select value={complexity} onChange={(e) => setComplexity(e.target.value)}>
-            <option value="">-- Any --</option>
-            <option value="1">1 (Easy)</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4 (Hard)</option>
-          </select>
-        </label>
-        <button onClick={fetchTask}>📥 Fetch Task</button>
-        {loading && <p>Loading task...</p>}
-        {task && task.task && (
-          <div>
-            <p>{task.task.text}</p>
-            {task.content?.image?.url && (
-              <img
-                src={task.content.image.url}
-                alt="task visual"
-                width="1080"
-                height="1920"
-                style={{ objectFit: "cover", maxWidth: "100%" }}
-              />
+          <section>
+            <h3><span role="img" aria-label="users">👥</span> Select User:</h3>
+            <select onChange={(e) => setSelectedUser(e.target.value)} value={selectedUser}>
+              <option>-- Select --</option>
+              {users.map(u => <option key={u}>{u}</option>)}
+            </select>
+            <input placeholder="or enter new user..." value={newUser} onChange={(e) => setNewUser(e.target.value)} />
+            <button onClick={setUser}>Set User</button>
+            <button onClick={() => fetchAll(selectedUser)}>🔄 Refresh</button>
+          </section>
+
+          <section>
+            <h3><span role="img" aria-label="profile">👤</span> Profile</h3>
+            {profile ? (
+              <div>
+                <p><strong>Languages:</strong> {profile.languages?.join(", ") || "N/A"}</p>
+                <p><strong>Expertise:</strong> {profile.expertise_domains?.join(", ") || "N/A"}</p>
+                <p><strong>Preferred Complexity:</strong> {profile.complexity_level ?? "N/A"}</p>
+                <p><strong>Score:</strong> {score} pts</p>
+                <p><strong>Badge:</strong> {getBadge(score)}</p>
+              </div>
+            ) : <p>Loading profile...</p>}
+          </section>
+
+          <section>
+            <h3><span role="img" aria-label="task">🧩</span> New Task</h3>
+            <label>🌐 Language:
+              <select value={lang} onChange={(e) => setLang(e.target.value)}>
+                <option value="en">English</option>
+                <option value="ar">Arabic</option>
+              </select>
+            </label>
+            <label>🎓 Expertise:
+              <select value={expertise} onChange={(e) => setExpertise(e.target.value)}>
+                <option value="">-- Select --</option>
+                <option value="animals">Animals</option>
+                <option value="construction-site">Construction Site</option>
+                <option value="fashion">Fashion</option>
+                <option value="garage-workshop">Garage Workshop</option>
+                <option value="kitchen">Kitchen</option>
+                <option value="living-room">Living Room</option>
+                <option value="medical-field">Medical Field</option>
+                <option value="music">Music</option>
+                <option value="office">Office</option>
+                <option value="school">School</option>
+                <option value="uae">UAE</option>
+                <option value="underwater">Underwater</option>
+              </select>
+            </label>
+            <label>📈 Complexity:
+              <select value={complexity} onChange={(e) => setComplexity(e.target.value)}>
+                <option value="">-- Any --</option>
+                <option value="1">1 (Easy)</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4 (Hard)</option>
+              </select>
+            </label>
+            <button onClick={fetchTask}>📥 Fetch Task</button>
+            {loading && <p>Loading task...</p>}
+            {task && task.task && (
+              <div>
+                <p>{task.task.text}</p>
+                {task.content?.image?.url && (
+                  <img
+                    src={task.content.image.url}
+                    alt="task visual"
+                    width="1080"
+                    height="1920"
+                    style={{ maxWidth: "100%", height: "auto" }}
+                  />
+                )}
+                <div>
+                  {task.task.choices.map(choice => (
+                    <label key={choice.key}>
+                      <input type="radio" name="answer" value={choice.key} onChange={(e) => setAnswer(e.target.value)} /> {choice.value}
+                    </label>
+                  ))}
+                </div>
+                <button onClick={submitAnswer}>✅ Submit Answer</button>
+              </div>
             )}
-            <div>
-              {task.task.choices.map(choice => (
-                <label key={choice.key}>
-                  <input
-                    type="radio"
-                    name="answer"
-                    value={choice.key}
-                    onChange={(e) => setAnswer(e.target.value)}
-                  /> {choice.value}
-                </label>
-              ))}
-            </div>
-            <button onClick={submitAnswer}>✅ Submit Answer</button>
-          </div>
-        )}
-      </section>
+          </section>
 
-      <section>
-        <h3>📅 Labeling History</h3>
-        <button onClick={() => {
-          const csv = ["Time,Question,Label,Confidence"];
-          history.forEach(h => {
-            csv.push(`${h.timestamp || new Date().toISOString()},${h.question},${h.label},${h.confidence}`);
-          });
-          const blob = new Blob([csv.join("\n")], { type: "text/csv" });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = `${selectedUser}_history.csv`;
-          a.click();
-        }}>📥 Download CSV</button>
-        {history.map((h, i) => (
-          <div key={i}>{formatTimestamp(h.timestamp)} — {h.question} — {h.label} — {h.confidence.toFixed(2)}</div>
-        ))}
-      </section>
+          <section>
+            <h3><span role="img" aria-label="history">📅</span> Labeling History</h3>
+            <button onClick={() => {
+              const csv = ["Time,Question,Label,Confidence"];
+              history.forEach(h => {
+                csv.push(`${h.timestamp || new Date().toISOString()},${h.question},${h.label},${h.confidence}`);
+              });
+              const blob = new Blob([csv.join("\n")], { type: "text/csv" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `${selectedUser}_history.csv`;
+              a.click();
+            }}>📥 Download CSV</button>
+            {history.map((h, i) => (
+              <div key={i}>{formatTimestamp(h.timestamp)} — {h.question} — {h.label} — {h.confidence.toFixed(2)}</div>
+            ))}
+          </section>
+        </>
+      )}
     </div>
   );
 }
