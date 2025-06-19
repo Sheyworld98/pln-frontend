@@ -75,26 +75,31 @@ function App() {
   };
 
   const submitAnswer = async () => {
-    if (!task || !answer) return;
-    try {
-      await axios.post(`${API_BASE}/task/${task.id}/submit`, {
-        user_id: selectedUser,
-        solution: answer,
-        question: task.task.text,
-        track_id: task.track_id
-      });
-      toast.success("Answer submitted successfully!");
-      setTask(null);
-      await fetchAll(selectedUser);
+  if (!task || !answer) return;
 
-      if (score + 20 >= 50 && score < 50) {
-        toast("🎉 Good job reaching 50 points! 🎉");
-      }
-    } catch (err) {
-      console.error("Submit error:", err);
-      toast.error("Failed to submit answer.");
-    }
+  const payload = {
+    user_id: selectedUser,
+    solution: answer,
+    question: task.text,        // ✅ Updated to task.text
+    track_id: task.track_id     // ✅ Must match API requirement
   };
+
+  console.log("Submitting payload:", payload);  // 🐞 Debug log
+
+  try {
+    await axios.post(`${API_BASE}/task/${task.id}/submit`, payload);
+    toast.success("Answer submitted successfully!");
+    setTask(null);
+    await fetchAll(selectedUser);
+
+    if (score + 20 >= 50 && score < 50) {
+      toast("🎉 Good job reaching 50 points! 🎉");
+    }
+  } catch (err) {
+    console.error("Submit error:", err.response?.data || err.message);
+    toast.error("Failed to submit answer.");
+  }
+};
 
   const getBadge = (score) => {
     if (score >= 100) return "🥇 Gold";
