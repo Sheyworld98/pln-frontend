@@ -77,7 +77,7 @@ function App() {
   const submitAnswer = async () => {
     if (!task || !answer) return;
     try {
-      const res = await axios.post(`${API_BASE}/task/submit/${task.id}`, {
+      const res = await axios.post(`${API_BASE}/task/{task.id}/$submit`, {
         user_id: selectedUser,
         solution: answer,
         question: task.task.text,
