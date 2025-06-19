@@ -77,33 +77,21 @@ function App() {
   const submitAnswer = async () => {
     if (!task || !answer) return;
     try {
-      const res = await axios.post(
-        `https://crowdlabel.tii.ae/api/2025.2/tasks/${task.id}/submit`,
-        {
-          id: task.id,
-          track_id: task.track_id,
-          question: task.task.text,
-          label: answer,
-          confidence: 1.0,
-          timestamp: new Date().toISOString()
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            "X-API-Key": "OkYLZD1-ZF0e9WV1wI5Naela5HhyVC6d"
-          }
-        }
-      );
-
-      toast.success("✅ Answer submitted successfully!");
+      await axios.post(`${API_BASE}/task/${task.id}/submit`, {
+        user_id: selectedUser,
+        solution: answer,
+        question: task.task.text,
+        track_id: task.track_id
+      });
+      toast.success("Answer submitted successfully!");
       setTask(null);
       await fetchAll(selectedUser);
 
       if (score + 20 >= 50 && score < 50) {
-        toast("🎉 Good job reaching 50 points!");
+        toast("🎉 Good job reaching 50 points! 🎉");
       }
     } catch (err) {
-      console.error("❌ Submit error:", err);
+      console.error("Submit error:", err);
       toast.error("Failed to submit answer.");
     }
   };
