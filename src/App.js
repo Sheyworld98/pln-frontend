@@ -3,6 +3,8 @@ import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import "./App.css";
+import qs from 'qs';
+
 
 const API_BASE = "https://pln-backend1-1.onrender.com";
 
@@ -83,34 +85,41 @@ function App() {
   };
 
   const submitAnswer = async () => {
-    if (!task || !answer) return;
+  if (!task || !answer) return;
 
-    const trimmedUser = selectedUser.trim();
+  const trimmedUser = selectedUser.trim();
 
-    const payload = {
-      user_id: trimmedUser,
-      solution: answer,
-      question: task.task.text,
-      track_id: task.track_id,
-    };
-
-    console.log("Submitting payload:", payload);
-
-    try {
-      await axios.post(`${API_BASE}/task/${task.id}/submit`, payload);
-      toast.success("Answer submitted successfully!");
-      setTask(null);
-      await fetchAll(trimmedUser);
-
-      if (score + 20 >= 50 && score < 50) {
-        toast("🎉 Good job reaching 50 points! 🎉");
-      }
-    } catch (err) {
-      console.error("Submit error:", err.response?.data || err.message);
-      alert(JSON.stringify(err.response?.data || err.message));
-      toast.error("Failed to submit answer.");
-    }
+  const payload = {
+    user_id: trimmedUser,
+    solution: answer,
+    track_id: task.track_id,
   };
+
+  console.log("Submitting payload:", payload);
+
+  try {
+    await axios.post(
+      `${API_BASE}/task/${task.id}/submit`,
+      qs.stringify(payload),
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      }
+    );
+    toast.success("Answer submitted successfully!");
+    setTask(null);
+    await fetchAll(trimmedUser);
+
+    if (score + 20 >= 50 && score < 50) {
+      toast("🎉 Good job reaching 50 points! 🎉");
+    }
+  } catch (err) {
+    console.error("Submit error:", err.response?.data || err.message);
+    alert(JSON.stringify(err.response?.data || err.message));
+    toast.error("Failed to submit answer.");
+  }
+};
 
   const getBadge = (score) => {
     if (score >= 100) return "🥇 Gold";
