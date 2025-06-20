@@ -27,7 +27,8 @@ function App() {
     fetch(`${API_BASE}/users`).then(res => res.json()).then(setUsers);
   }, []);
 
-  const fetchAll = async (user) => {
+  const fetchAll = async (userRaw) => {
+    const user = userRaw.trim();
     try {
       const profileRes = await axios.get(`${API_BASE}/profile/${user}`);
       const lbRes = await axios.get(`${API_BASE}/leaderboard`);
@@ -43,20 +44,27 @@ function App() {
   };
 
   const setUser = async () => {
-    const user = newUser || selectedUser;
+    const user = (newUser || selectedUser).trim();
     if (!user) return;
     setSelectedUser(user);
     await fetchAll(user);
   };
 
   const fetchTask = async () => {
-    if (!selectedUser) return;
+    if (!selectedUser.trim()) return;
     setLoading(true);
+    const trimmedUser = selectedUser.trim();
     try {
-      await axios.post(`${API_BASE}/profile/update/${selectedUser}`, { lang, expertise, complexity });
-      const res = await axios.get(`${API_BASE}/task/fetch/${selectedUser}`, {
-        params: { lang, topic: expertise, complexity }
+      await axios.post(`${API_BASE}/profile/update/${trimmedUser}`, {
+        lang,
+        expertise,
+        complexity,
       });
+
+      const res = await axios.get(`${API_BASE}/task/fetch/${trimmedUser}`, {
+        params: { lang, topic: expertise, complexity },
+      });
+
       if (res.data && res.data.task) {
         setTask(res.data);
         setAnswer("");
@@ -65,7 +73,7 @@ function App() {
         toast.error(res.data.error || "No new task available.");
         setTask(null);
       }
-      await fetchAll(selectedUser);
+      await fetchAll(trimmedUser);
     } catch (err) {
       console.error("Fetch task error:", err);
       toast.error("Failed to fetch task.");
@@ -75,32 +83,34 @@ function App() {
   };
 
   const submitAnswer = async () => {
-  if (!task || !answer) return;
+    if (!task || !answer) return;
 
-  const payload = {
-    user_id: selectedUser,
-    solution: answer,
-    question: task.task.text,      // <-- fixed this
-    track_id: task.track_id     // ✅ Must match API requirement
-  };
+    const trimmedUser = selectedUser.trim();
 
-  console.log("Submitting payload:", payload);  // 🐞 Debug log
+    const payload = {
+      user_id: trimmedUser,
+      solution: answer,
+      question: task.task.text,
+      track_id: task.track_id,
+    };
 
-  try {
-    await axios.post(`${API_BASE}/task/${task.id}/submit`, payload);
-    toast.success("Answer submitted successfully!");
-    setTask(null);
-    await fetchAll(selectedUser);
+    console.log("Submitting payload:", payload);
 
-    if (score + 20 >= 50 && score < 50) {
-      toast("🎉 Good job reaching 50 points! 🎉");
+    try {
+      await axios.post(`${API_BASE}/task/${task.id}/submit`, payload);
+      toast.success("Answer submitted successfully!");
+      setTask(null);
+      await fetchAll(trimmedUser);
+
+      if (score + 20 >= 50 && score < 50) {
+        toast("🎉 Good job reaching 50 points! 🎉");
+      }
+    } catch (err) {
+      console.error("Submit error:", err.response?.data || err.message);
+      alert(JSON.stringify(err.response?.data || err.message));
+      toast.error("Failed to submit answer.");
     }
-  } catch (err) {
-    console.error("Submit error:", err.response?.data || err.message);
-    alert(JSON.stringify(err.response?.data || err.message)); // 👈 temporary
-    toast.error("Failed to submit answer.");
-  }
-};
+  };
 
   const getBadge = (score) => {
     if (score >= 100) return "🥇 Gold";
@@ -161,7 +171,7 @@ function App() {
             </select>
             <input placeholder="or enter new user..." value={newUser} onChange={(e) => setNewUser(e.target.value)} />
             <button onClick={setUser}>Set User</button>
-            <button onClick={() => fetchAll(selectedUser)}>🔄 Refresh</button>
+            <button onClick={() => fetchAll(selectedUser.trim())}>🔄 Refresh</button>
           </section>
 
           <section>
@@ -248,7 +258,7 @@ function App() {
               const url = URL.createObjectURL(blob);
               const a = document.createElement("a");
               a.href = url;
-              a.download = `${selectedUser}_history.csv`;
+              a.download = `${selectedUser.trim()}_history.csv`;
               a.click();
             }}>📥 Download CSV</button>
             {history.map((h, i) => (
