@@ -80,7 +80,7 @@ function App() {
   const payload = {
     user_id: selectedUser,
     solution: answer,
-    question: task.text,        // ✅ Updated to task.text
+    question: task.task.text,      // <-- fixed this
     track_id: task.track_id     // ✅ Must match API requirement
   };
 
@@ -97,6 +97,7 @@ function App() {
     }
   } catch (err) {
     console.error("Submit error:", err.response?.data || err.message);
+    alert(JSON.stringify(err.response?.data || err.message)); // 👈 temporary
     toast.error("Failed to submit answer.");
   }
 };
