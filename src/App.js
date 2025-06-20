@@ -3,8 +3,6 @@ import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import "./App.css";
-import qs from 'qs';
-
 
 const API_BASE = "https://pln-backend1-1.onrender.com";
 
@@ -19,9 +17,6 @@ function App() {
   const [task, setTask] = useState(null);
   const [answer, setAnswer] = useState("");
   const [showDarkMode, setShowDarkMode] = useState(false);
-  const [lang, setLang] = useState("en");
-  const [expertise, setExpertise] = useState("");
-  const [complexity, setComplexity] = useState("");
   const [feedbackConsent, setFeedbackConsent] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -57,16 +52,7 @@ function App() {
     setLoading(true);
     const trimmedUser = selectedUser.trim();
     try {
-      await axios.post(`${API_BASE}/profile/update/${trimmedUser}`, {
-        lang,
-        expertise,
-        complexity,
-      });
-
-      const res = await axios.get(`${API_BASE}/task/fetch/${trimmedUser}`, {
-        params: { lang, topic: expertise, complexity },
-      });
-
+      const res = await axios.get(`${API_BASE}/task/fetch/${trimmedUser}`);
       if (res.data && res.data.task) {
         setTask(res.data);
         setAnswer("");
@@ -85,38 +71,29 @@ function App() {
   };
 
   const submitAnswer = async () => {
-  if (!task || !answer) return;
-
-  const trimmedUser = selectedUser.trim();
-
-  const payload = {
-    user_id: trimmedUser,
-    solution: answer,
-    track_id: task.track_id,
-  };
-
-  console.log("Submitting payload:", payload);
-
-  try {
-    await axios.post(`${API_BASE}/task/${task.id}/submit`, payload, {
-  headers: {
-    'Content-Type': 'application/json',
-  }
-});
-
-    toast.success("Answer submitted successfully!");
-    setTask(null);
-    await fetchAll(trimmedUser);
-
-    if (score + 20 >= 50 && score < 50) {
-      toast("🎉 Good job reaching 50 points! 🎉");
+    if (!task || !answer) return;
+    const trimmedUser = selectedUser.trim();
+    const payload = {
+      user_id: trimmedUser,
+      solution: answer,
+      question: task.task?.text || "",
+      track_id: task.track_id,
+    };
+    console.log("Submitting payload:", payload);
+    try {
+      await axios.post(`${API_BASE}/task/${task.id}/submit`, payload);
+      toast.success("Answer submitted successfully!");
+      setTask(null);
+      await fetchAll(trimmedUser);
+      if (score + 20 >= 50 && score < 50) {
+        toast("🎉 Good job reaching 50 points! 🎉");
+      }
+    } catch (err) {
+      console.error("Submit error:", err.response?.data || err.message);
+      alert(JSON.stringify(err.response?.data || err.message));
+      toast.error("Failed to submit answer.");
     }
-  } catch (err) {
-    console.error("Submit error:", err.response?.data || err.message);
-    alert(JSON.stringify(err.response?.data || err.message));
-    toast.error("Failed to submit answer.");
-  }
-};
+  };
 
   const getBadge = (score) => {
     if (score >= 100) return "🥇 Gold";
@@ -133,144 +110,61 @@ function App() {
     <div className={`App ${showDarkMode ? "dark fade-in" : "fade-in"}`}>
       <ToastContainer />
 
-      {!feedbackConsent && (
+      {!feedbackConsent ? (
         <section>
-          <h2>🎉 Peripheral is here, welcome aboard, we are glad to have you!</h2>
-          <h4><span role="img" aria-label="privacy">🔒</span> Will you take a minute to help us improve our services to you?</h4>
-          <label>
-            <input
-              type="radio"
-              name="consent"
-              value="yes"
-              onChange={() => setFeedbackConsent(true)}
-            /> Yes
-          </label>
-          <label>
-            <input
-              type="radio"
-              name="consent"
-              value="no"
-              onChange={() => {
-                toast("Thank you!");
-                setTimeout(() => window.location.reload(), 1500);
-              }}
-            /> No
-          </label>
-          <p><span role="img" aria-label="shield">🛡️</span> Your participation is anonymous, as well as any data you provide.</p>
+          <h2>🎉 Peripheral is here, welcome aboard!</h2>
+          <p>🔒 Will you help us improve our service?</p>
+          <label><input type="radio" name="consent" onChange={() => setFeedbackConsent(true)} /> Yes</label>
+          <label><input type="radio" name="consent" onChange={() => { toast("Thank you!"); setTimeout(() => window.location.reload(), 1500); }} /> No</label>
         </section>
-      )}
-
-      {feedbackConsent && (
+      ) : (
         <>
-          <h1 className="logo">Peripheral <span role="img" aria-label="party">🎉</span></h1>
-          <h2><span role="img" aria-label="dashboard">🔠</span> PLN Contributor Dashboard</h2>
-
-          <button onClick={() => setShowDarkMode(!showDarkMode)}>
-            <span role="img" aria-label="theme-toggle">🌓</span> Toggle {showDarkMode ? "Light" : "Dark"} Mode
-          </button>
+          <h1 className="logo">Peripheral 🎉</h1>
+          <button onClick={() => setShowDarkMode(!showDarkMode)}>🌓 Toggle {showDarkMode ? "Light" : "Dark"} Mode</button>
 
           <section>
-            <h3><span role="img" aria-label="users">👥</span> Select User:</h3>
+            <h3>👥 Select User</h3>
             <select onChange={(e) => setSelectedUser(e.target.value)} value={selectedUser}>
               <option>-- Select --</option>
               {users.map(u => <option key={u}>{u}</option>)}
             </select>
-            <input placeholder="or enter new user..." value={newUser} onChange={(e) => setNewUser(e.target.value)} />
+            <input placeholder="or enter new user" value={newUser} onChange={(e) => setNewUser(e.target.value)} />
             <button onClick={setUser}>Set User</button>
             <button onClick={() => fetchAll(selectedUser.trim())}>🔄 Refresh</button>
           </section>
 
           <section>
-            <h3><span role="img" aria-label="profile">👤</span> Profile</h3>
-            {profile ? (
-              <div>
-                <p><strong>Languages:</strong> {profile.languages?.join(", ") || "N/A"}</p>
-                <p><strong>Expertise:</strong> {profile.expertise_domains?.join(", ") || "N/A"}</p>
-                <p><strong>Preferred Complexity:</strong> {profile.complexity_level ?? "N/A"}</p>
-                <p><strong>Score:</strong> {score} pts</p>
-                <p><strong>Badge:</strong> {getBadge(score)}</p>
-              </div>
-            ) : <p>Loading profile...</p>}
-          </section>
-
-          <section>
-            <h3><span role="img" aria-label="task">🧩</span> New Task</h3>
-            <label>🌐 Language:
-              <select value={lang} onChange={(e) => setLang(e.target.value)}>
-                <option value="en">English</option>
-                <option value="ar">Arabic</option>
-              </select>
-            </label>
-            <label>🎓 Expertise:
-              <select value={expertise} onChange={(e) => setExpertise(e.target.value)}>
-                <option value="">-- Select --</option>
-                <option value="animals">Animals</option>
-                <option value="construction-site">Construction Site</option>
-                <option value="fashion">Fashion</option>
-                <option value="garage-workshop">Garage Workshop</option>
-                <option value="kitchen">Kitchen</option>
-                <option value="living-room">Living Room</option>
-                <option value="medical-field">Medical Field</option>
-                <option value="music">Music</option>
-                <option value="office">Office</option>
-                <option value="school">School</option>
-                <option value="uae">UAE</option>
-                <option value="underwater">Underwater</option>
-              </select>
-            </label>
-            <label>📈 Complexity:
-              <select value={complexity} onChange={(e) => setComplexity(e.target.value)}>
-                <option value="">-- Any --</option>
-                <option value="1">1 (Easy)</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4 (Hard)</option>
-              </select>
-            </label>
+            <h3>🧩 New Task</h3>
             <button onClick={fetchTask}>📥 Fetch Task</button>
-            {loading && <p>Loading task...</p>}
-            {task && task.task ? (
-  <div>
-    <p>{task.task.text || "No question text found"}</p>
-
-    {task.content?.image?.url && (
-      <img
-        src={task.content.image.url}
-        alt="task visual"
-        width="1080"
-        height="1920"
-        style={{ maxWidth: "100%", height: "auto" }}
-      />
-    )}
-
-    {task.task.choices?.length ? (
-      <div>
-        {task.task.choices.map(choice => (
-          <label key={choice.key}>
-            <input type="radio" name="answer" value={choice.key} onChange={(e) => setAnswer(e.target.value)} /> {choice.value}
-          </label>
-        ))}
-      </div>
-    ) : <p>No choices available.</p>}
-
-    <button onClick={submitAnswer}>✅ Submit Answer</button>
-  </div>
-) : (
-  <p>No task data found or task is malformed.</p>
-)}
+            {loading && <p>Loading...</p>}
+            {task && (
+              <div>
+                <p>{task.task?.text || "📝 No question text provided for this task."}</p>
+                {task.content?.image?.url && <img src={task.content.image.url} alt="task" style={{ maxWidth: "100%" }} />}
+                {Array.isArray(task.task?.choices) && task.task.choices.length > 0 ? (
+                  <div>
+                    {task.task.choices.map(choice => (
+                      <label key={choice.key}>
+                        <input type="radio" name="answer" value={choice.key} onChange={(e) => setAnswer(e.target.value)} /> {choice.value}
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  <input type="text" placeholder="Enter answer" value={answer} onChange={(e) => setAnswer(e.target.value)} />
+                )}
+                <button onClick={submitAnswer}>✅ Submit</button>
+              </div>
+            )}
           </section>
 
           <section>
-            <h3><span role="img" aria-label="history">📅</span> Labeling History</h3>
+            <h3>📅 History</h3>
             <button onClick={() => {
               const csv = ["Time,Question,Label,Confidence"];
-              history.forEach(h => {
-                csv.push(`${h.timestamp || new Date().toISOString()},${h.question},${h.label},${h.confidence}`);
-              });
+              history.forEach(h => csv.push(`${h.timestamp},${h.question},${h.label},${h.confidence}`));
               const blob = new Blob([csv.join("\n")], { type: "text/csv" });
-              const url = URL.createObjectURL(blob);
               const a = document.createElement("a");
-              a.href = url;
+              a.href = URL.createObjectURL(blob);
               a.download = `${selectedUser.trim()}_history.csv`;
               a.click();
             }}>📥 Download CSV</button>
