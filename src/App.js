@@ -98,15 +98,12 @@ function App() {
   console.log("Submitting payload:", payload);
 
   try {
-    await axios.post(
-      `${API_BASE}/task/${task.id}/submit`,
-      qs.stringify(payload),
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        }
-      }
-    );
+    await axios.post(`${API_BASE}/task/${task.id}/submit`, payload, {
+  headers: {
+    'Content-Type': 'application/json',
+  }
+});
+
     toast.success("Answer submitted successfully!");
     setTask(null);
     await fetchAll(trimmedUser);
@@ -232,28 +229,35 @@ function App() {
             </label>
             <button onClick={fetchTask}>📥 Fetch Task</button>
             {loading && <p>Loading task...</p>}
-            {task && task.task && (
-              <div>
-                <p>{task.task.text}</p>
-                {task.content?.image?.url && (
-                  <img
-                    src={task.content.image.url}
-                    alt="task visual"
-                    width="1080"
-                    height="1920"
-                    style={{ maxWidth: "100%", height: "auto" }}
-                  />
-                )}
-                <div>
-                  {task.task.choices.map(choice => (
-                    <label key={choice.key}>
-                      <input type="radio" name="answer" value={choice.key} onChange={(e) => setAnswer(e.target.value)} /> {choice.value}
-                    </label>
-                  ))}
-                </div>
-                <button onClick={submitAnswer}>✅ Submit Answer</button>
-              </div>
-            )}
+            {task && task.task ? (
+  <div>
+    <p>{task.task.text || "No question text found"}</p>
+
+    {task.content?.image?.url && (
+      <img
+        src={task.content.image.url}
+        alt="task visual"
+        width="1080"
+        height="1920"
+        style={{ maxWidth: "100%", height: "auto" }}
+      />
+    )}
+
+    {task.task.choices?.length ? (
+      <div>
+        {task.task.choices.map(choice => (
+          <label key={choice.key}>
+            <input type="radio" name="answer" value={choice.key} onChange={(e) => setAnswer(e.target.value)} /> {choice.value}
+          </label>
+        ))}
+      </div>
+    ) : <p>No choices available.</p>}
+
+    <button onClick={submitAnswer}>✅ Submit Answer</button>
+  </div>
+) : (
+  <p>No task data found or task is malformed.</p>
+)}
           </section>
 
           <section>
